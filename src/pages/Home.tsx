@@ -1,0 +1,260 @@
+import { Link } from "react-router-dom";
+import { courses } from "../data/site";
+
+const stats = [
+  { value: "15+", label: "Años de experiencia" },
+  { value: "8,500+", label: "Alumnos graduados" },
+  { value: "98%", label: "Aprobación" },
+  { value: "4.9/5", label: "Calificación" },
+];
+
+const benefits = [
+  { icon: "01", title: "Seguridad garantizada", desc: "Vehículos con doble comando, frenos ABS y seguro de responsabilidad civil." },
+  { icon: "02", title: "Instructores certificados", desc: "Profesionales con más de 10 años de experiencia en conducción segura." },
+  { icon: "03", title: "Material incluido", desc: "Manual digital, videos explicativos y exámenes simulados." },
+  { icon: "04", title: "Certificación oficial", desc: "Diploma válido para trámite de licencia de conducir." },
+  { icon: "05", title: "Horarios flexibles", desc: "Clases de lunes a sábado en turnos matutinos y vespertinos." },
+  { icon: "06", title: "Pago seguro", desc: "Tarjeta, transferencia, PayPal y Mercado Pago." },
+];
+
+const testimonials = [
+  { name: "María González", role: "Curso Intermedio", text: "Excelente atención. Me sentí segura desde el primer día. Aprobé mi examen a la primera.", rating: 5 },
+  { name: "Carlos Ramírez", role: "Curso Experto", text: "La parte de conducción defensiva vale mucho. Los simulacros de emergencia fueron muy útiles.", rating: 5 },
+  { name: "Laura Hernández", role: "Madre de alumno", text: "Inscribí a mi hijo y el trato fue impecable. Recibió su certificado al día siguiente de aprobar.", rating: 5 },
+];
+
+const faqs = [
+  { q: "¿Necesito experiencia previa?", a: "No. Nuestro Curso Básico está diseñado para personas sin experiencia. Empezamos en circuito cerrado." },
+  { q: "¿Cuánto dura un curso?", a: "El Básico dura 2 semanas, el Intermedio 3 semanas y el Experto 4 semanas." },
+  { q: "¿Qué documentos necesito?", a: "INE o pasaporte, CURP, comprobante de domicilio y pago inicial." },
+  { q: "¿El certificado es válido para la licencia?", a: "Sí. Nuestros certificados están avalados por las autoridades de tránsito." },
+];
+
+export default function Home() {
+  return (
+    <>
+      {/* HERO */}
+      <section className="hero-bg text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary-dark/50 to-transparent" />
+        <div className="container-x relative py-24 md:py-32 grid lg:grid-cols-2 gap-16 items-center">
+          <div>
+            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-xs font-medium mb-6">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              Escuela certificada con 15+ años de experiencia
+            </div>
+            <h1 className="text-4xl md:text-5xl lg:text-[56px] font-bold leading-[1.1] tracking-tight">
+              Aprende a conducir con seguridad
+            </h1>
+            <p className="mt-6 text-lg text-white/80 max-w-lg leading-relaxed">
+              Cursos prácticos con instructores certificados, vehículos modernos y exámenes en línea para obtener tu certificación oficial.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link to="/cursos" className="bg-white text-primary px-7 py-3.5 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors">
+                Ver cursos
+              </Link>
+              <Link to="/examenes" className="border border-white/40 text-white px-7 py-3.5 rounded-lg text-sm font-semibold hover:bg-white/10 transition-colors">
+                Exámenes en línea
+              </Link>
+            </div>
+          </div>
+
+          <div className="hidden lg:block">
+            <div className="bg-white/[0.07] backdrop-blur-sm border border-white/10 rounded-2xl p-8">
+              <div className="flex items-center gap-2 mb-6">
+                <span className="bg-accent/20 text-accent text-xs font-semibold px-3 py-1 rounded">OFERTA</span>
+                <span className="text-white/60 text-xs">Curso Básico</span>
+              </div>
+              <div className="text-5xl font-bold mb-2">$1,499</div>
+              <div className="text-white/50 text-sm line-through mb-6">$1,899 MXN</div>
+              <ul className="space-y-3 mb-8">
+                {["12 horas prácticas", "Instructores certificados", "Material digital", "Certificado oficial"].map((f) => (
+                  <li key={f} className="flex items-center gap-3 text-sm text-white/80">
+                    <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs">✓</span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link to="/cursos" className="block w-full bg-white text-primary py-3 rounded-lg text-sm font-semibold text-center hover:bg-slate-50 transition-colors">
+                Reservar mi cupo
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="container-x pb-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {stats.map((s) => (
+              <div key={s.label} className="bg-white/[0.06] backdrop-blur-sm border border-white/10 rounded-xl p-5 text-center">
+                <div className="text-2xl md:text-3xl font-bold">{s.value}</div>
+                <div className="text-xs text-white/60 mt-1">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* BENEFITS */}
+      <section className="py-24">
+        <div className="container-x">
+          <div className="max-w-2xl mb-14">
+            <div className="eyebrow mb-3">Por qué elegirnos</div>
+            <h2 className="section-title">Seis razones para aprender con nosotros</h2>
+            <p className="section-subtitle mt-4">
+              Más de 15 años formando conductores responsables.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {benefits.map((b) => (
+              <div key={b.title} className="flex gap-4">
+                <div className="w-12 h-12 rounded-lg bg-primary/5 text-primary flex items-center justify-center font-bold text-sm shrink-0">
+                  {b.icon}
+                </div>
+                <div>
+                  <h3 className="font-semibold text-ink">{b.title}</h3>
+                  <p className="mt-1.5 text-sm text-muted leading-relaxed">{b.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* COURSES */}
+      <section className="py-24 bg-slate-50">
+        <div className="container-x">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-14">
+            <div className="max-w-2xl">
+              <div className="eyebrow mb-3">Cursos</div>
+              <h2 className="section-title">Elige el plan ideal para ti</h2>
+              <p className="section-subtitle mt-4">
+                Tres niveles para cubrir desde principiantes hasta conductores certificados.
+              </p>
+            </div>
+            <Link to="/cursos" className="text-sm font-semibold text-primary hover:text-primary-dark flex items-center gap-1">
+              Ver todos →
+            </Link>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {courses.map((c) => (
+              <div key={c.id} className="card course-card-hover overflow-hidden flex flex-col">
+                <div className="p-7 flex-1 flex flex-col min-h-[540px]">
+                  <div className="text-xs font-semibold text-secondary uppercase tracking-wider">{c.id}</div>
+                  <h3 className="mt-2 text-xl font-bold">{c.title}</h3>
+                  <p className="mt-2 text-sm text-muted">{c.tagline}</p>
+                  <div className="mt-5 flex items-baseline gap-2">
+                    <span className="text-3xl font-bold">${c.price.toLocaleString()}</span>
+                    {c.oldPrice && <span className="text-muted text-sm line-through">${c.oldPrice.toLocaleString()}</span>}
+                  </div>
+                  <div className="text-xs text-muted mt-1">{c.hours}</div>
+                  <ul className="mt-6 space-y-2.5 text-sm text-ink-soft flex-1">
+                    {c.features.slice(0, 4).map((f) => (
+                      <li key={f} className="flex items-start gap-2.5">
+                        <span className="text-secondary mt-0.5">✓</span>
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-auto pt-6">
+                    <Link to="/cursos" className="btn-primary w-full">Comprar ahora</Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section className="py-24">
+        <div className="container-x">
+          <div className="max-w-2xl mx-auto text-center mb-14">
+            <div className="eyebrow mb-3">Proceso</div>
+            <h2 className="section-title">Cómo obtener tu certificación</h2>
+          </div>
+          <div className="grid md:grid-cols-4 gap-8">
+            {[
+              { step: "01", title: "Elige tu curso", desc: "Selecciona el nivel según tu experiencia." },
+              { step: "02", title: "Reserva y paga", desc: "Pago en línea seguro y rápido." },
+              { step: "03", title: "Toma tus clases", desc: "Aprende con instructores certificados." },
+              { step: "04", title: "Certificación", desc: "Aprueba y recibe tu certificado oficial." },
+            ].map((s) => (
+              <div key={s.step} className="text-center md:text-left">
+                <div className="text-4xl font-bold text-slate-200 mb-3">{s.step}</div>
+                <h3 className="font-semibold">{s.title}</h3>
+                <p className="mt-2 text-sm text-muted">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* TESTIMONIALS */}
+      <section className="py-24 bg-slate-50">
+        <div className="container-x">
+          <div className="max-w-2xl mx-auto text-center mb-14">
+            <div className="eyebrow mb-3">Testimonios</div>
+            <h2 className="section-title">Lo que dicen nuestros alumnos</h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {testimonials.map((t) => (
+              <div key={t.name} className="bg-white rounded-xl border border-slate-100 p-7">
+                <div className="text-amber-500 text-sm mb-4">{"★".repeat(t.rating)}</div>
+                <p className="text-ink-soft text-sm leading-relaxed">"{t.text}"</p>
+                <div className="mt-6 pt-5 border-t border-slate-100 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-semibold text-sm text-primary">
+                    {t.name.split(" ").map(n => n[0]).join("")}
+                  </div>
+                  <div>
+                    <div className="font-semibold text-sm">{t.name}</div>
+                    <div className="text-xs text-muted">{t.role}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="py-24">
+        <div className="container-x max-w-3xl">
+          <div className="text-center mb-14">
+            <div className="eyebrow mb-3">Dudas</div>
+            <h2 className="section-title">Preguntas frecuentes</h2>
+          </div>
+          <div className="divide-y divide-slate-200 border-t border-slate-200">
+            {faqs.map((f, i) => (
+              <details key={i} className="group">
+                <summary className="flex items-center justify-between py-5 cursor-pointer list-none">
+                  <span className="font-semibold text-ink pr-4">{f.q}</span>
+                  <span className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-muted group-open:rotate-45 transition-transform shrink-0">+</span>
+                </summary>
+                <p className="pb-5 text-sm text-muted leading-relaxed">{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-16 bg-primary">
+        <div className="container-x text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-white">¿Listo para obtener tu licencia?</h2>
+          <p className="mt-4 text-white/70 max-w-xl mx-auto">
+            Reserva tu curso hoy y comienza a conducir con confianza.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Link to="/cursos" className="bg-white text-primary px-8 py-3.5 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors">
+              Ver cursos
+            </Link>
+            <Link to="/contacto" className="border border-white/40 text-white px-8 py-3.5 rounded-lg text-sm font-semibold hover:bg-white/10 transition-colors">
+              Contactar asesor
+            </Link>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
