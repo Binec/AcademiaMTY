@@ -2,11 +2,63 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { courses } from "../data/site";
 
+function CountUp({ end, duration = 2000, suffix = "", decimals = 0 }: { end: number; duration?: number; suffix?: string; decimals?: number }) {
+  const [count, setCount] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+  const elementRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (elementRef.current) {
+      observer.observe(elementRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!isVisible) return;
+
+    let startTime: number | null = null;
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      const currentCount = progress * end;
+      setCount(currentCount);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [isVisible, end, duration]);
+
+  return (
+    <span ref={elementRef}>
+      {count.toLocaleString(undefined, {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+      })}
+      {suffix}
+    </span>
+  );
+}
+
 const stats = [
-  { value: "15+", label: "Años de experiencia" },
-  { value: "8,500+", label: "Alumnos graduados" },
-  { value: "98%", label: "Aprobación" },
-  { value: "4.9/5", label: "Calificación" },
+  { end: 15, suffix: "+", label: "Años de experiencia" },
+  { end: 8500, suffix: "+", label: "Alumnos graduados" },
+  { end: 98, suffix: "%", label: "Aprobación" },
+  { end: 4.9, suffix: "/5", decimals: 1, label: "Calificación" },
 ];
 
 const benefits = [
@@ -117,7 +169,10 @@ export default function Home() {
               />
             </div>
             <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-xs font-medium mb-6">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span className="relative flex h-2 w-2 mr-1">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
+                <span className="relative inline-flex w-2 h-2 rounded-full bg-emerald-400" />
+              </span>
               Escuela certificada con 15+ años de experiencia
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-[56px] font-bold leading-[1.1] tracking-tight">
@@ -139,7 +194,10 @@ export default function Home() {
           <div className="hidden lg:block">
             <div className="bg-white/[0.07] backdrop-blur-sm border border-white/10 rounded-2xl p-8">
               <div className="flex items-center gap-2 mb-6">
-                <span className="bg-accent/20 text-accent text-xs font-semibold px-3 py-1 rounded">OFERTA</span>
+                <span className="relative inline-flex bg-accent/20 text-accent text-xs font-semibold px-3 py-1 rounded-full overflow-hidden">
+                  <span className="absolute inset-0 bg-accent/30 animate-pulse rounded-full" />
+                  <span className="relative">OFERTA</span>
+                </span>
                 <span className="text-white/60 text-xs">Curso Básico</span>
               </div>
               <div className="text-5xl font-bold mb-2">$1,499</div>
@@ -147,7 +205,7 @@ export default function Home() {
               <ul className="space-y-3 mb-8">
                 {["12 horas prácticas", "Instructores certificados", "Material digital", "Certificado oficial"].map((f) => (
                   <li key={f} className="flex items-center gap-3 text-sm text-white/80">
-                    <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs">✓</span>
+                    <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs transition-transform duration-300 hover:scale-125">✓</span>
                     {f}
                   </li>
                 ))}
@@ -164,7 +222,9 @@ export default function Home() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {stats.map((s) => (
               <div key={s.label} className="bg-white/[0.06] backdrop-blur-sm border border-white/10 rounded-xl p-5 text-center">
-                <div className="text-2xl md:text-3xl font-bold">{s.value}</div>
+                <div className="text-2xl md:text-3xl font-bold">
+                  <CountUp end={s.end} suffix={s.suffix} decimals={s.decimals} />
+                </div>
                 <div className="text-xs text-white/60 mt-1">{s.label}</div>
               </div>
             ))}
@@ -254,8 +314,8 @@ export default function Home() {
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {benefits.map((b) => (
-              <div key={b.title} className="flex gap-4">
-                <div className="w-12 h-12 rounded-lg bg-primary/5 text-primary flex items-center justify-center font-bold text-sm shrink-0">
+              <div key={b.title} className="group flex gap-4 p-4 rounded-xl transition-all duration-300 hover:bg-white hover:shadow-md">
+                <div className="w-12 h-12 rounded-lg bg-primary/5 text-primary flex items-center justify-center font-bold text-sm shrink-0 transition-transform duration-300 group-hover:scale-110">
                   {b.icon}
                 </div>
                 <div>
