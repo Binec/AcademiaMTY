@@ -17,9 +17,9 @@ const items: GalleryItem[] = [
   { id: 5, title: "Práctica al volante", category: "instalaciones", image: "https://images.pexels.com/photos/19477337/pexels-photo-19477337.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200" },
   { id: 6, title: "Vehículo equipado", category: "instalaciones", image: "https://images.pexels.com/photos/1405666/pexels-photo-1405666.png?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200" },
   { id: 7, title: "Control del vehículo", category: "instalaciones", image: "https://images.pexels.com/photos/9737305/pexels-photo-9737305.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200" },
-  { id: 8, title: "Clase con instructor", category: "alumnos", image: "https://images.pexels.com/photos/6817037/pexels-photo-6817037.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200" },
-  { id: 9, title: "Primera clase práctica", category: "alumnos", image: "https://images.pexels.com/photos/9518244/pexels-photo-9518244.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200" },
-  { id: 10, title: "Alumno aprendiendo", category: "alumnos", image: "https://images.pexels.com/photos/9518016/pexels-photo-9518016.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200" },
+  { id: 8, title: "Jaqueline - Alumna graduada", category: "alumnos", image: "https://github.com/Binec/AcademiaMTY/blob/main/public/images/jaqueline.jpg?raw=true" },
+  { id: 9, title: "Conny Rocha - Alumna certificada", category: "alumnos", image: "https://github.com/Binec/AcademiaMTY/blob/main/public/images/connyrocha.jpg?raw=true" },
+  { id: 10, title: "Diana Peña - Alumna certificada", category: "alumnos", image: "https://github.com/Binec/AcademiaMTY/blob/main/public/images/DianaPena.jpg?raw=true" },
   { id: 11, title: "Acompañamiento del instructor", category: "alumnos", image: "https://images.pexels.com/photos/9518019/pexels-photo-9518019.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200" },
   { id: 12, title: "Sesión de manejo", category: "alumnos", image: "https://images.pexels.com/photos/9518022/pexels-photo-9518022.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200" },
 ];
@@ -125,11 +125,11 @@ export default function Galeria() {
 
       {lightbox && (
         <div
-          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-3 md:p-6"
+          className="fixed inset-0 z-50 bg-primary/85 backdrop-blur-md flex items-center justify-center p-3 md:p-6"
           onClick={closeLightbox}
         >
           <div
-            className="relative w-full max-w-5xl overflow-hidden rounded-2xl border border-white/10 bg-black/35 shadow-2xl backdrop-blur-xl"
+            className="relative w-full max-w-5xl overflow-hidden rounded-2xl border border-white/15 bg-white/[0.08] shadow-2xl backdrop-blur-xl"
             onClick={(e) => e.stopPropagation()}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
@@ -137,7 +137,7 @@ export default function Galeria() {
           >
             <button
               onClick={closeLightbox}
-              className="absolute right-3 top-3 z-10 h-9 w-9 rounded-full border border-white/15 bg-black/40 text-white backdrop-blur-md transition-colors hover:bg-white/15"
+              className="absolute right-3 top-3 z-10 h-9 w-9 rounded-full border border-white/20 bg-white/[0.08] text-white backdrop-blur-md transition-colors hover:bg-white/15"
               aria-label="Cerrar galería"
             >
               x
@@ -145,7 +145,7 @@ export default function Galeria() {
 
             <button
               onClick={showPrev}
-              className="absolute left-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 rounded-full border border-white/15 bg-black/40 text-white backdrop-blur-md transition-colors hover:bg-white/15 md:grid md:place-items-center"
+              className="absolute left-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 rounded-full border border-white/20 bg-white/[0.08] text-white backdrop-blur-md transition-colors hover:bg-white/15 md:grid md:place-items-center"
               aria-label="Imagen anterior"
             >
               ‹
@@ -153,20 +153,20 @@ export default function Galeria() {
 
             <button
               onClick={showNext}
-              className="absolute right-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 rounded-full border border-white/15 bg-black/40 text-white backdrop-blur-md transition-colors hover:bg-white/15 md:grid md:place-items-center"
+              className="absolute right-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 rounded-full border border-white/20 bg-white/[0.08] text-white backdrop-blur-md transition-colors hover:bg-white/15 md:grid md:place-items-center"
               aria-label="Siguiente imagen"
             >
               ›
             </button>
 
-            <div className="w-full bg-black">
+            <div className="w-full bg-primary">
               <img
                 src={lightbox.image}
                 alt={lightbox.title}
                 className="h-[55vh] max-h-[680px] min-h-[300px] w-full object-cover"
               />
             </div>
-            <div className="border-t border-white/10 bg-black/45 p-5 text-white backdrop-blur-md md:p-7">
+            <div className="border-t border-white/15 bg-white/[0.08] p-5 text-white backdrop-blur-md md:p-7">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">
