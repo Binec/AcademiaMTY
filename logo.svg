@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none">
+  <!-- Círculo exterior -->
+  <circle cx="200" cy="170" r="135" stroke="#0E213F" stroke-width="8" fill="white"/>
+
+  <!-- Escudo -->
+  <path d="M125 100
+           Q125 95 130 95
+           L155 95
+           Q160 95 160 100
+           Q160 105 165 105
+           Q170 105 170 100
+           Q170 95 175 95
+           L185 95
+           Q190 95 190 100
+           Q190 105 195 105
+           L205 105
+           Q210 105 210 100
+           Q210 95 215 95
+           L225 95
+           Q230 95 230 100
+           Q230 105 235 105
+           Q240 105 240 100
+           Q240 95 245 95
+           L270 95
+           Q275 95 275 100
+           L275 215
+           Q275 245 240 265
+           Q210 280 200 285
+           Q190 280 160 265
+           Q125 245 125 215
+           Z"
+        stroke="#0E213F" stroke-width="7" fill="none" stroke-linejoin="round"/>
+
+  <!-- Texto AM -->
+  <text x="200" y="160" font-family="Inter, Arial, sans-serif" font-size="58" font-weight="900"
+        fill="#0E213F" text-anchor="middle" letter-spacing="-2">AM</text>
+
+  <!-- Listón dorado -->
+  <path d="M105 175 L295 175 L285 200 L295 225 L105 225 L115 200 Z"
+        fill="#B39241"/>
+  <path d="M105 175 L115 200 L105 225 L95 215 L100 200 L95 185 Z" fill="#967a32"/>
+  <path d="M295 175 L285 200 L295 225 L305 215 L300 200 L305 185 Z" fill="#967a32"/>
+
+  <!-- Texto MONTERREY -->
+  <text x="200" y="207" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700"
+        fill="#FFF6ED" text-anchor="middle" letter-spacing="1">MONTERREY</text>
+
+  <!-- Carretera con perspectiva -->
+  <path d="M195 240 L240 285 L260 285 L205 240 Z" fill="#B39241"/>
+  <path d="M205 240 L270 285 L290 285 L215 240 Z" fill="#967a32" opacity="0.85"/>
+
+  <!-- Texto ACADEMIA -->
+  <text x="200" y="365" font-family="Inter, Arial, sans-serif" font-size="60" font-weight="900"
+        fill="#0E213F" text-anchor="middle" letter-spacing="-1">ACADEMIA</text>
+</svg>
