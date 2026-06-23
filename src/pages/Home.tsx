@@ -259,16 +259,16 @@ export default function Home() {
               </div>
             ))}
 
-            <div className="absolute inset-0 flex items-center p-4 sm:p-6 md:p-12">
+            <div className="absolute inset-0 flex items-end sm:items-center p-4 sm:p-6 md:p-12">
               <div className="w-full max-w-xl rounded-2xl border border-white/15 bg-white/[0.08] p-5 sm:p-6 md:p-8 text-white shadow-2xl backdrop-blur-md">
-                <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white/80">
+                <div className="hidden sm:inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white/80">
                   <span className="h-1.5 w-1.5 rounded-full bg-secondary" />
                   {sliderItems[activeSlide].label}
                 </div>
-                <h2 className="mt-3 text-2xl sm:text-3xl font-bold leading-tight md:text-4xl">
+                <h2 className="sm:mt-3 text-xl sm:text-3xl font-bold leading-tight md:text-4xl">
                   {sliderItems[activeSlide].title}
                 </h2>
-                <p className="mt-3 text-xs sm:text-sm leading-relaxed text-white/75 md:text-base">
+                <p className="hidden sm:block sm:mt-3 text-xs sm:text-sm leading-relaxed text-white/75 md:text-base">
                   {sliderItems[activeSlide].text}
                 </p>
                 <Link
