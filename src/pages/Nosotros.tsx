@@ -108,13 +108,19 @@ export default function Nosotros() {
         </div>
       </section>
 
-      <section className="py-16 bg-primary">
-        <div className="container-x text-center">
-          <h2 className="text-3xl font-bold text-white">Conoce nuestras instalaciones</h2>
-          <p className="mt-3 text-white/70 max-w-xl mx-auto">
+      <section className="relative py-20 overflow-hidden">
+        <img
+          src="https://images.pexels.com/photos/6165395/pexels-photo-6165395.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200"
+          alt="Persona conduciendo un auto"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-secondary/95 via-secondary/85 to-secondary-dark/80" />
+        <div className="container-x relative text-center">
+          <h2 className="text-3xl font-bold text-white drop-shadow">Conoce nuestras instalaciones</h2>
+          <p className="mt-3 text-white/90 max-w-xl mx-auto">
             Circuito cerrado, salones de clase y unidades modernas para tu aprendizaje.
           </p>
-          <Link to="/galeria" className="mt-8 inline-flex bg-white text-primary px-8 py-3.5 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors">
+          <Link to="/galeria" className="mt-8 inline-flex bg-white text-secondary-dark px-8 py-3.5 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors">
             Ver galería →
           </Link>
         </div>

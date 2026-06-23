@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { courses } from "../data/site";
 
@@ -60,6 +60,8 @@ const sliderItems = [
 
 export default function Home() {
   const [activeSlide, setActiveSlide] = useState(0);
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -68,6 +70,38 @@ export default function Home() {
     return () => window.clearInterval(id);
   }, []);
 
+  const goToPrevSlide = () => {
+    setActiveSlide((current) => (current - 1 + sliderItems.length) % sliderItems.length);
+  };
+
+  const goToNextSlide = () => {
+    setActiveSlide((current) => (current + 1) % sliderItems.length);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchEndX.current = null;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX.current === null || touchEndX.current === null) return;
+    const distance = touchStartX.current - touchEndX.current;
+    const minSwipeDistance = 50;
+
+    if (distance > minSwipeDistance) {
+      goToNextSlide();
+    } else if (distance < -minSwipeDistance) {
+      goToPrevSlide();
+    }
+
+    touchStartX.current = null;
+    touchEndX.current = null;
+  };
+
   return (
     <>
       {/* HERO */}
@@ -75,7 +109,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-r from-primary-dark/50 to-transparent" />
         <div className="container-x relative py-24 md:py-32 grid lg:grid-cols-2 gap-16 items-center">
           <div>
-            <div className="mb-8 h-28 md:h-36 w-auto">
+            <div className="mb-8 h-40 md:h-36 w-auto">
               <img
                 src="https://github.com/Binec/AcademiaMTY/blob/main/AM_SINFONDOMesa%20de%20trabajo%202%20copia%202@2x.png?raw=true"
                 alt="AM Monterrey Academia"
@@ -141,7 +175,12 @@ export default function Home() {
       {/* IMAGE SLIDER */}
       <section className="py-20 bg-white">
         <div className="container-x">
-          <div className="relative h-[560px] sm:h-[480px] md:h-[540px] overflow-hidden rounded-2xl border border-slate-200 bg-primary shadow-sm">
+          <div
+            className="relative h-[560px] sm:h-[480px] md:h-[540px] overflow-hidden rounded-2xl border border-slate-200 bg-primary shadow-sm"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
             {sliderItems.map((item, index) => (
               <div
                 key={item.title}
@@ -181,18 +220,21 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M13 5l7 7-7 7" />
                   </svg>
                 </Link>
-                <div className="mt-5 flex gap-2">
-                  {sliderItems.map((item, index) => (
-                    <button
-                      key={item.label}
-                      type="button"
-                      onClick={() => setActiveSlide(index)}
-                      className={`h-1.5 rounded-full transition-all duration-300 ${
-                        index === activeSlide ? "w-10 bg-secondary" : "w-5 bg-white/40 hover:bg-white/70"
-                      }`}
-                      aria-label={`Ver slide ${index + 1}`}
-                    />
-                  ))}
+                <div className="mt-5 flex items-center justify-between gap-3">
+                  <div className="flex gap-2">
+                    {sliderItems.map((item, index) => (
+                      <button
+                        key={item.label}
+                        type="button"
+                        onClick={() => setActiveSlide(index)}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${
+                          index === activeSlide ? "w-10 bg-secondary" : "w-5 bg-white/40 hover:bg-white/70"
+                        }`}
+                        aria-label={`Ver slide ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-[11px] text-white/55 sm:hidden">Desliza ↔</span>
                 </div>
               </div>
             </div>
@@ -345,17 +387,23 @@ export default function Home() {
       </section>
 
       {/* CTA */}
-      <section className="py-16 bg-primary">
-        <div className="container-x text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white">¿Listo para obtener tu licencia?</h2>
-          <p className="mt-4 text-white/70 max-w-xl mx-auto">
+      <section className="relative py-20 overflow-hidden">
+        <img
+          src="https://images.pexels.com/photos/6165395/pexels-photo-6165395.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200"
+          alt="Persona conduciendo un auto"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-secondary/95 via-secondary/85 to-secondary-dark/80" />
+        <div className="container-x relative text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-white drop-shadow">¿Listo para obtener tu licencia?</h2>
+          <p className="mt-4 text-white/90 max-w-xl mx-auto">
             Reserva tu curso hoy y comienza a conducir con confianza.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link to="/cursos" className="bg-white text-primary px-8 py-3.5 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors">
+            <Link to="/cursos" className="bg-white text-secondary-dark px-8 py-3.5 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors">
               Ver cursos
             </Link>
-            <Link to="/contacto" className="border border-white/40 text-white px-8 py-3.5 rounded-lg text-sm font-semibold hover:bg-white/10 transition-colors">
+            <Link to="/contacto" className="border border-white/60 text-white px-8 py-3.5 rounded-lg text-sm font-semibold hover:bg-white/15 transition-colors">
               Contactar asesor
             </Link>
           </div>

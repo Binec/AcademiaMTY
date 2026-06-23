@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 type Category = "todos" | "unidades" | "instalaciones" | "alumnos";
 
@@ -33,9 +33,41 @@ const filters: { key: Category; label: string }[] = [
 
 export default function Galeria() {
   const [filter, setFilter] = useState<Category>("todos");
-  const [lightbox, setLightbox] = useState<GalleryItem | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
 
   const filtered = filter === "todos" ? items : items.filter((i) => i.category === filter);
+  const lightbox = lightboxIndex !== null ? filtered[lightboxIndex] : null;
+
+  const closeLightbox = () => setLightboxIndex(null);
+  const showPrev = () => {
+    setLightboxIndex((current) => {
+      if (current === null) return current;
+      return (current - 1 + filtered.length) % filtered.length;
+    });
+  };
+  const showNext = () => {
+    setLightboxIndex((current) => {
+      if (current === null) return current;
+      return (current + 1) % filtered.length;
+    });
+  };
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchEndX.current = null;
+  };
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = () => {
+    if (touchStartX.current === null || touchEndX.current === null) return;
+    const distance = touchStartX.current - touchEndX.current;
+    if (distance > 50) showNext();
+    if (distance < -50) showPrev();
+    touchStartX.current = null;
+    touchEndX.current = null;
+  };
 
   return (
     <>
@@ -68,10 +100,10 @@ export default function Galeria() {
           </div>
 
           <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filtered.map((item) => (
+            {filtered.map((item, index) => (
               <button
                 key={item.id}
-                onClick={() => setLightbox(item)}
+                onClick={() => setLightboxIndex(index)}
                 className="group relative aspect-square rounded-xl overflow-hidden bg-slate-100 hover:shadow-lg transition-shadow"
               >
                 <img
@@ -93,20 +125,74 @@ export default function Galeria() {
 
       {lightbox && (
         <div
-          className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
-          onClick={() => setLightbox(null)}
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-3 md:p-6"
+          onClick={closeLightbox}
         >
           <div
-            className="bg-white rounded-xl max-w-2xl w-full shadow-2xl overflow-hidden"
+            className="relative w-full max-w-5xl overflow-hidden rounded-2xl border border-white/10 bg-black/35 shadow-2xl backdrop-blur-xl"
             onClick={(e) => e.stopPropagation()}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
-            <div className="aspect-video bg-slate-100 overflow-hidden">
-              <img src={lightbox.image} alt={lightbox.title} className="w-full h-full object-cover" />
+            <button
+              onClick={closeLightbox}
+              className="absolute right-3 top-3 z-10 h-9 w-9 rounded-full border border-white/15 bg-black/40 text-white backdrop-blur-md transition-colors hover:bg-white/15"
+              aria-label="Cerrar galería"
+            >
+              x
+            </button>
+
+            <button
+              onClick={showPrev}
+              className="absolute left-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 rounded-full border border-white/15 bg-black/40 text-white backdrop-blur-md transition-colors hover:bg-white/15 md:grid md:place-items-center"
+              aria-label="Imagen anterior"
+            >
+              ‹
+            </button>
+
+            <button
+              onClick={showNext}
+              className="absolute right-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 rounded-full border border-white/15 bg-black/40 text-white backdrop-blur-md transition-colors hover:bg-white/15 md:grid md:place-items-center"
+              aria-label="Siguiente imagen"
+            >
+              ›
+            </button>
+
+            <div className="w-full bg-black">
+              <img
+                src={lightbox.image}
+                alt={lightbox.title}
+                className="h-[55vh] max-h-[680px] min-h-[300px] w-full object-cover"
+              />
             </div>
-            <div className="p-6">
-              <div className="text-xs uppercase tracking-wider text-secondary font-semibold">{lightbox.category}</div>
-              <h3 className="mt-1 text-xl font-bold">{lightbox.title}</h3>
-              <button onClick={() => setLightbox(null)} className="btn-primary w-full mt-5">Cerrar</button>
+            <div className="border-t border-white/10 bg-black/45 p-5 text-white backdrop-blur-md md:p-7">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">
+                    {lightbox.category} · {(lightboxIndex ?? 0) + 1}/{filtered.length}
+                  </div>
+                  <h3 className="mt-2 text-2xl font-bold md:text-3xl">{lightbox.title}</h3>
+                  <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/65">
+                    Imagen relacionada con la formación vial, el acompañamiento de instructores y las prácticas de manejo seguro en AM Monterrey Academia.
+                  </p>
+                </div>
+                <div className="hidden shrink-0 gap-2 sm:flex">
+                  <button onClick={showPrev} className="rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold text-white/80 transition-colors hover:bg-white/10">
+                    Anterior
+                  </button>
+                  <button onClick={showNext} className="rounded-lg bg-secondary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-secondary-dark">
+                    Siguiente
+                  </button>
+                </div>
+              </div>
+              <div className="mt-4 flex items-center justify-between sm:hidden">
+                <span className="text-xs text-white/50">Desliza para ver más</span>
+                <div className="flex gap-2">
+                  <button onClick={showPrev} className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold text-white/80">Anterior</button>
+                  <button onClick={showNext} className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-semibold text-white">Siguiente</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

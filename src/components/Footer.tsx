@@ -51,13 +51,7 @@ export default function Footer() {
           <div>
             <h4 className="text-white font-semibold text-sm mb-5">Contacto</h4>
             <ul className="space-y-4 text-sm">
-              <li className="flex items-start gap-3">
-                <svg className="w-4 h-4 text-slate-500 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span className="text-slate-400">{siteConfig.address}</span>
-              </li>
+
               <li className="flex items-center gap-3">
                 <svg className="w-4 h-4 text-slate-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -123,20 +117,7 @@ export default function Footer() {
             <div className="text-sm text-slate-400 space-y-2">
               <div>{siteConfig.hours}</div>
             </div>
-            <div className="mt-6">
-              <h4 className="text-white font-semibold text-sm mb-3">Newsletter</h4>
-              <form onSubmit={(e) => e.preventDefault()} className="flex">
-                <input
-                  type="email"
-                  required
-                  placeholder="Tu email"
-                  className="flex-1 bg-white/5 border border-white/10 rounded-l-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-slate-400"
-                />
-                <button type="submit" className="bg-white/10 hover:bg-white/15 text-white px-4 py-2 rounded-r-lg text-sm font-medium transition-colors">
-                  →
-                </button>
-              </form>
-            </div>
+
           </div>
         </div>
       </div>

@@ -40,10 +40,10 @@ export default function Navbar() {
           : "bg-primary border-primary/20"
       }`}
     >
-      <div className="container-x flex items-center justify-between h-16 md:h-[72px]">
+      <div className="container-x flex items-center justify-between h-20 md:h-[72px]">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3">
-          <div className="flex items-center justify-center h-14 w-auto shrink-0">
+          <div className="flex items-center justify-center h-16 md:h-14 w-auto shrink-0">
             <img
               src="https://github.com/Binec/AcademiaMTY/blob/main/AM_SINFONDOMesa%20de%20trabajo%202%20copia%202@2x.png?raw=true"
               alt="AM Monterrey Academia"
