@@ -61,14 +61,15 @@ export default function Contacto() {
         <div className="container-x grid lg:grid-cols-3 gap-8">
           <div className="space-y-4">
             {[
-              { icon: "📍", label: "Dirección", text: siteConfig.address },
-              { icon: "📞", label: "Teléfono", text: siteConfig.phone, href: `tel:${siteConfig.phoneRaw}` },
-              { icon: "✉️", label: "Correo", text: siteConfig.email, href: `mailto:${siteConfig.email}` },
-              { icon: "🕒", label: "Horario", text: siteConfig.hours },
+              { label: "Teléfono", text: siteConfig.phone, href: `tel:${siteConfig.phoneRaw}`, iconPath: "M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" },
+              { label: "Correo", text: siteConfig.email, href: `mailto:${siteConfig.email}`, iconPath: "M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" },
+              { label: "Horario", text: siteConfig.hours, iconPath: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" },
             ].map((c) => (
               <div key={c.label} className="bg-white rounded-xl border border-slate-100 p-5 flex items-start gap-4">
-                <div className="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center text-lg shrink-0">
-                  {c.icon}
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <svg className="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d={c.iconPath} />
+                  </svg>
                 </div>
                 <div>
                   <div className="text-xs uppercase tracking-wider text-muted font-semibold">{c.label}</div>
@@ -155,18 +156,7 @@ export default function Contacto() {
               </form>
             </div>
 
-            <div className="bg-white rounded-xl border border-slate-100 overflow-hidden mt-6">
-              <div className="p-6 pb-4">
-                <h3 className="font-semibold">Ubicación</h3>
-                <p className="text-sm text-muted mt-1">{siteConfig.address}</p>
-              </div>
-              <iframe
-                title="Mapa"
-                className="w-full h-72 border-0"
-                loading="lazy"
-                src="https://www.openstreetmap.org/export/embed.html?bbox=-99.22%2C19.38%2C-99.12%2C19.45&layer=mapnik"
-              />
-            </div>
+
           </div>
         </div>
       </section>

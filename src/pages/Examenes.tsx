@@ -65,7 +65,7 @@ export default function Examenes() {
         </div>
 
         <div className="container-x mt-16">
-          <div className="bg-slate-50 rounded-xl p-10 text-center">
+          <div className="bg-white rounded-xl border border-slate-200 p-10 text-center">
             <div className="eyebrow mb-3">Proceso</div>
             <h2 className="text-2xl md:text-3xl font-bold text-center">Certificación automatizada</h2>
             <div className="mt-10 grid md:grid-cols-4 gap-6 text-left">

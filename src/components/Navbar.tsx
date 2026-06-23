@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { siteConfig } from "../data/site";
+
 import { useAuth } from "../context/AuthContext";
 
 const navItems = [
@@ -42,18 +42,20 @@ export default function Navbar() {
     >
       <div className="container-x flex items-center justify-between h-16 md:h-[72px]">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2.5">
-          <div className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm transition ${
-            scrolled ? "bg-primary text-white" : "bg-white text-primary"
-          }`}>
-            AE
+        <Link to="/" className="flex items-center gap-3">
+          <div className="flex items-center justify-center h-14 w-auto shrink-0">
+            <img
+              src="https://github.com/Binec/AcademiaMTY/blob/main/AM_SINFONDOMesa%20de%20trabajo%202%20copia%202@2x.png?raw=true"
+              alt="AM Monterrey Academia"
+              className="h-full w-auto object-contain"
+            />
           </div>
-          <div className="hidden sm:block">
-            <div className={`font-bold text-[15px] leading-tight ${scrolled ? "text-ink" : "text-white"}`}>
-              {siteConfig.name}
+          <div className="hidden sm:block leading-tight">
+            <div className={`font-bold text-[15px] tracking-tight ${scrolled ? "text-ink" : "text-white"}`}>
+              AM Monterrey
             </div>
-            <div className={`text-[10px] font-medium uppercase tracking-widest ${scrolled ? "text-muted" : "text-white/70"}`}>
-              Escuela de Manejo
+            <div className={`text-[10px] font-semibold uppercase tracking-[0.18em] ${scrolled ? "text-secondary" : "text-secondary"}`}>
+              Academia de Manejo
             </div>
           </div>
         </Link>

@@ -31,85 +31,97 @@ export default function SignUp() {
     else navigate("/examenes", { replace: true });
   };
 
+  const inputClass =
+    "w-full rounded-lg border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-2.5 text-sm focus:border-secondary focus:outline-none focus:ring-1 focus:ring-secondary/30";
+  const labelClass = "block text-xs font-semibold uppercase tracking-wider text-white/60 mb-2";
+
   return (
-    <section className="py-20 min-h-screen bg-slate-50 flex items-center">
+    <section className="py-20 min-h-screen hero-bg flex items-center">
       <div className="container-x max-w-md w-full">
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center font-bold text-sm">AE</div>
-            <span className="font-bold">AutoEscuela Pro</span>
+          <Link to="/" className="flex flex-col items-center group">
+            <div className="h-32 w-32 mb-4 transition-transform group-hover:scale-105 duration-300">
+              <img
+                src="https://github.com/Binec/AcademiaMTY/blob/main/AM_SINFONDOMesa%20de%20trabajo%202%20copia%202@2x.png?raw=true"
+                alt="AM Monterrey Academia"
+                className="h-full w-full object-contain"
+              />
+            </div>
+            <span className="font-bold text-white text-2xl tracking-tight">AM Monterrey Academia</span>
           </Link>
-          <h1 className="text-3xl font-bold">Crear cuenta</h1>
-          <p className="mt-2 text-muted text-sm">Regístrate para acceder a exámenes y certificaciones.</p>
+          <div className="mt-8 space-y-2">
+            <h1 className="text-3xl font-bold text-white">Crear cuenta</h1>
+            <p className="text-white/70 text-sm">Regístrate para acceder a exámenes y certificaciones.</p>
+          </div>
         </div>
 
-        <form onSubmit={onSubmit} className="bg-white rounded-xl border border-slate-200 p-8 space-y-4">
+        <form onSubmit={onSubmit} className="bg-white/[0.07] backdrop-blur-md rounded-2xl border border-white/15 p-8 space-y-4 shadow-2xl">
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-2">Nombre completo</label>
+            <label className={labelClass}>Nombre completo</label>
             <input
               required
               minLength={3}
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+              className={inputClass}
               placeholder="Juan Pérez"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-2">Correo electrónico</label>
+            <label className={labelClass}>Correo electrónico</label>
             <input
               type="email"
               required
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+              className={inputClass}
               placeholder="tu@correo.com"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-2">Teléfono <span className="font-normal normal-case text-muted">(opcional)</span></label>
+            <label className={labelClass}>Teléfono <span className="font-normal normal-case text-white/40">(opcional)</span></label>
             <input
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+              className={inputClass}
               placeholder="55 1234 5678"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-2">Contraseña</label>
+            <label className={labelClass}>Contraseña</label>
             <input
               type="password"
               required
               minLength={6}
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+              className={inputClass}
               placeholder="Mínimo 6 caracteres"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-2">Confirmar contraseña</label>
+            <label className={labelClass}>Confirmar contraseña</label>
             <input
               type="password"
               required
               value={form.confirm}
               onChange={(e) => setForm({ ...form, confirm: e.target.value })}
-              className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+              className={inputClass}
               placeholder="Repite tu contraseña"
             />
           </div>
 
           {error && (
-            <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div>
+            <div className="p-3 rounded-lg bg-red-500/15 border border-red-400/30 text-red-200 text-sm">{error}</div>
           )}
 
           <button type="submit" disabled={loading} className="btn-primary w-full disabled:opacity-60">
             {loading ? "Creando cuenta..." : "Crear cuenta"}
           </button>
 
-          <div className="text-center text-sm text-muted pt-2">
+          <div className="text-center text-sm text-white/60 pt-2">
             ¿Ya tienes cuenta?{" "}
-            <Link to="/login" className="text-primary font-semibold hover:underline">
+            <Link to="/login" className="text-secondary font-semibold hover:underline">
               Inicia sesión
             </Link>
           </div>

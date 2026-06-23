@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   adminGetStats,
@@ -6,9 +6,12 @@ import {
   adminListUsers,
   adminUpdateUser,
   adminDeleteUser,
+  adminGrantCourse,
+  adminRevokeCourse,
+  adminCreateStudent,
 } from "../services/api";
 import { AdminStats, DbAttempt, DbCertificate, DbUser } from "../services/db";
-import { CourseLevel, courses } from "../data/site";
+import { CourseLevel } from "../data/site";
 import { downloadCertificate } from "../utils/certificate";
 
 const priceMap: Record<CourseLevel, number> = {
@@ -18,55 +21,50 @@ const priceMap: Record<CourseLevel, number> = {
   "primeros-auxilios": 799,
 };
 
-type Tab = "overview" | "students" | "admins";
-
 export default function Admin() {
   const { userId } = useParams();
   const navigate = useNavigate();
 
-  // Estado global
-  const [tab, setTab] = useState<Tab>("students");
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [users, setUsers] = useState<DbUser[]>([]);
+  const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState<"" | "admin" | "student">("");
+  const [refreshCounter, setRefreshCounter] = useState(0);
 
-  // Estado del drawer
+  // Drawer / Detail state
   const [selectedUser, setSelectedUser] = useState<DbUser | null>(null);
   const [userAttempts, setUserAttempts] = useState<DbAttempt[]>([]);
   const [userCerts, setUserCerts] = useState<DbCertificate[]>([]);
   const [loadingDetail, setLoadingDetail] = useState(false);
 
-  // Estado de edición
-  const [editMode, setEditMode] = useState(false);
-  const [editForm, setEditForm] = useState({ name: "", email: "", phone: "" });
-  const [editSaving, setEditSaving] = useState(false);
+  // Modals state
+  const [creating, setCreating] = useState(false);
+  const [editingUser, setEditingUser] = useState<DbUser | null>(null);
 
-  // Estado de eliminación
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  // Form states
+  const [createForm, setCreateForm] = useState({ name: "", email: "", phone: "", password: "student123" });
+  const [editForm, setEditForm] = useState({ name: "", email: "", phone: "", role: "student" as "admin" | "student" });
 
-  // Carga datos
-  const loadStats = useCallback(() => {
+  const refreshData = () => setRefreshCounter((c) => c + 1);
+
+  // Load Main List & Stats
+  useEffect(() => {
     adminGetStats().then(setStats).catch(console.error);
-  }, []);
+    adminListUsers({ search: search.trim(), role: roleFilter || undefined })
+      .then((r) => {
+        setUsers(r.users);
+        setTotal(r.total);
+      })
+      .catch(console.error);
+  }, [search, roleFilter, refreshCounter]);
 
-  const loadUsers = useCallback(() => {
-    adminListUsers({ search }).then((r) => {
-      setUsers(r.users);
-    });
-  }, [search]);
-
-  useEffect(() => { loadStats(); }, [loadStats]);
-  useEffect(() => { loadUsers(); }, [loadUsers]);
-
-  // Drawer: cargar detalle de usuario
+  // Load User Detail if userId in URL
   useEffect(() => {
     if (!userId) {
       setSelectedUser(null);
       setUserAttempts([]);
       setUserCerts([]);
-      setEditMode(false);
-      setShowDeleteConfirm(false);
       return;
     }
     setLoadingDetail(true);
@@ -75,700 +73,478 @@ export default function Admin() {
         setSelectedUser(user);
         setUserAttempts(attempts);
         setUserCerts(certificates);
-        setEditForm({ name: user.name, email: user.email, phone: user.phone || "" });
       })
-      .catch(() => setSelectedUser(null))
+      .catch((e) => {
+        console.error(e);
+        setSelectedUser(null);
+      })
       .finally(() => setLoadingDetail(false));
-  }, [userId]);
+  }, [userId, refreshCounter]);
 
-  const closeDetail = () => {
-    navigate("/admin");
-    setEditMode(false);
-    setShowDeleteConfirm(false);
+  const selectUser = (id: string) => navigate(`/admin/${id}`);
+  const closeDetail = () => navigate("/admin");
+
+  const handleCreateStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!createForm.name || !createForm.email) return;
+    try {
+      const res = await adminCreateStudent(createForm);
+      if (!res.ok) {
+        alert(res.error || "Error al crear estudiante");
+        return;
+      }
+      setCreateForm({ name: "", email: "", phone: "", password: "student123" });
+      setCreating(false);
+      refreshData();
+    } catch (err: any) {
+      alert(err.message || "Error al crear");
+    }
   };
 
-  const openUser = (id: string) => navigate(`/admin/${id}`);
+  const startEdit = (u: DbUser) => {
+    setEditingUser(u);
+    setEditForm({ name: u.name, email: u.email, phone: u.phone || "", role: u.role });
+  };
 
-  // GUARDAR EDICIÓN
-  const saveEdit = async () => {
-    if (!selectedUser) return;
-    setEditSaving(true);
+  const handleEditUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
     try {
-      await adminUpdateUser(selectedUser.id, {
-        name: editForm.name,
-        email: editForm.email,
-        phone: editForm.phone || undefined,
+      await adminUpdateUser(editingUser.id, {
+        name: editForm.name.trim(),
+        email: editForm.email.trim().toLowerCase(),
+        phone: editForm.phone.trim() || undefined,
+        role: editForm.role,
       });
-      const fresh = await adminGetUserDetail(selectedUser.id);
-      setSelectedUser(fresh.user);
-      setEditMode(false);
-      loadUsers();
-      loadStats();
-    } catch (e: any) {
-      alert(e.message || "Error al guardar");
-    } finally {
-      setEditSaving(false);
+      setEditingUser(null);
+      refreshData();
+    } catch (err: any) {
+      alert(err.message || "Error al actualizar");
     }
   };
 
-  // CAMBIAR ROL
-  const toggleRole = async () => {
-    if (!selectedUser) return;
-    const newRole = selectedUser.role === "admin" ? "student" : "admin";
+  const handleDeleteUser = async (u: DbUser) => {
+    if (u.email.toLowerCase() === "admin@user.com") {
+      alert("No puedes eliminar al Super Administrador principal (admin@user.com).");
+      return;
+    }
+    if (!confirm(`¿Eliminar definitivamente al usuario ${u.name} (${u.email})?\nSe borrarán también todos sus intentos de examen y certificados.`)) return;
     try {
-      await adminUpdateUser(selectedUser.id, { role: newRole });
-      const fresh = await adminGetUserDetail(selectedUser.id);
-      setSelectedUser(fresh.user);
-      loadUsers();
-      loadStats();
-    } catch (e: any) {
-      alert(e.message || "Error al cambiar rol");
+      await adminDeleteUser(u.id);
+      if (selectedUser?.id === u.id) closeDetail();
+      refreshData();
+    } catch (err: any) {
+      alert(err.message || "Error al eliminar");
     }
   };
 
-  // ELIMINAR USUARIO
-  const confirmDelete = async () => {
+  const handleGrantCourse = async (lvl: CourseLevel) => {
     if (!selectedUser) return;
-    setDeleting(true);
     try {
-      await adminDeleteUser(selectedUser.id);
-      closeDetail();
-      loadUsers();
-      loadStats();
-    } catch (e: any) {
-      alert(e.message || "Error al eliminar");
-    } finally {
-      setDeleting(false);
+      await adminGrantCourse(selectedUser.id, lvl);
+      refreshData();
+    } catch (err: any) {
+      alert(err.message || "Error al habilitar curso");
     }
   };
 
-  // Total pagado por usuario
-  const userTotalPaid = (u: DbUser) =>
-    u.purchasedCourses.reduce((sum, lvl) => sum + (priceMap[lvl] || 0), 0);
+  const handleRevokeCourse = async (lvl: CourseLevel) => {
+    if (!selectedUser) return;
+    if (!confirm(`¿Revocar acceso a ${lvl} para ${selectedUser.name}?`)) return;
+    try {
+      await adminRevokeCourse(selectedUser.id, lvl);
+      refreshData();
+    } catch (err: any) {
+      alert(err.message || "Error al revocar curso");
+    }
+  };
+
+  const totalRevenue = users.reduce((sum, u) => sum + u.purchasedCourses.reduce((s, l) => s + (priceMap[l] || 0), 0), 0);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
+    <div className="min-h-screen bg-slate-50 pb-20">
       <section className="bg-primary text-white py-10">
-        <div className="container-x max-w-7xl">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="eyebrow mb-2 text-white/70">Panel administrativo</div>
-              <h1 className="text-3xl md:text-4xl font-bold">Dashboard</h1>
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => { setTab("overview"); navigate("/admin"); }}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${tab === "overview" ? "bg-white text-primary" : "text-white/80 hover:bg-white/10"}`}
-              >
-                Resumen
-              </button>
-              <button
-                onClick={() => { setTab("students"); navigate("/admin"); }}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${tab === "students" ? "bg-white text-primary" : "text-white/80 hover:bg-white/10"}`}
-              >
-                Alumnos
-              </button>
-              <button
-                onClick={() => { setTab("admins"); navigate("/admin"); }}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${tab === "admins" ? "bg-white text-primary" : "text-white/80 hover:bg-white/10"}`}
-              >
-                Admins
-              </button>
-            </div>
+        <div className="container-x max-w-7xl flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <div className="text-white/70 text-xs font-semibold uppercase tracking-[0.2em] mb-2">Panel Administrativo Global</div>
+            <h1 className="text-3xl md:text-4xl font-bold">Administración de Estudiantes y Usuarios</h1>
+            <p className="mt-2 text-white/75 text-sm">Supervisa alumnos, edita perfiles, gestiona pagos/cursos y descarga certificados oficiales.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <button onClick={() => setCreating(true)} className="btn-secondary !bg-white !text-primary hover:!bg-slate-100 gap-2 shadow-lg">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              + Nuevo Alumno
+            </button>
+            <button onClick={refreshData} className="border border-white/40 text-white hover:bg-white/10 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors">
+              🔄 Actualizar
+            </button>
           </div>
         </div>
       </section>
 
       <div className="container-x max-w-7xl py-10">
-        {/* STATS */}
-        {tab === "overview" && stats && (
-          <div className="space-y-10">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-              <StatCard label="Usuarios" value={stats.totalUsers} accent="primary" />
-              <StatCard label="Alumnos" value={stats.totalStudents} accent="secondary" />
-              <StatCard label="Intentos" value={stats.totalAttempts} />
-              <StatCard label="Aprobados" value={stats.totalPassed} accent="emerald" />
-              <StatCard label="Certificados" value={stats.totalCertificates} accent="emerald" />
-              <StatCard label="Ingresos" value={`$${stats.totalRevenue.toLocaleString()}`} accent="amber" small />
-            </div>
-
-            {/* Últimos usuarios registrados */}
-            <div>
-              <h2 className="text-lg font-bold mb-4">Últimos usuarios</h2>
-              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead className="bg-slate-50 text-muted text-xs uppercase tracking-wider">
-                    <tr>
-                      <th className="text-left px-5 py-3 font-semibold">Usuario</th>
-                      <th className="text-left px-5 py-3 font-semibold">Rol</th>
-                      <th className="text-left px-5 py-3 font-semibold">Cursos</th>
-                      <th className="text-left px-5 py-3 font-semibold">Pagado</th>
-                      <th className="text-left px-5 py-3 font-semibold">Registro</th>
-                      <th className="px-5 py-3" />
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {users.slice(0, 10).map((u) => (
-                      <tr key={u.id} className="hover:bg-slate-50/60">
-                        <td className="px-5 py-3">
-                          <div className="font-semibold">{u.name}</div>
-                          <div className="text-xs text-muted">{u.email}</div>
-                        </td>
-                        <td className="px-5 py-3">
-                          <RoleBadge role={u.role} />
-                        </td>
-                        <td className="px-5 py-3">
-                          <CourseBadges courses={u.purchasedCourses} />
-                        </td>
-                        <td className="px-5 py-3 font-semibold text-sm">${userTotalPaid(u).toLocaleString()}</td>
-                        <td className="px-5 py-3 text-xs text-muted">
-                          {new Date(u.createdAt).toLocaleDateString("es-MX")}
-                        </td>
-                        <td className="px-5 py-3 text-right">
-                          <button onClick={() => openUser(u.id)} className="text-xs font-semibold text-primary hover:underline">
-                            Ver →
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+        {/* Stats */}
+        {stats && (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-10">
+            <StatCard label="Usuarios Totales" value={stats.totalUsers} accent="primary" />
+            <StatCard label="Alumnos Registrados" value={stats.totalStudents} accent="secondary" />
+            <StatCard label="Exámenes Realizados" value={stats.totalAttempts} />
+            <StatCard label="Exámenes Aprobados" value={stats.totalPassed} accent="emerald" />
+            <StatCard label="Certificados Emitidos" value={stats.totalCertificates} accent="emerald" />
+            <StatCard label="Ingresos Estimados" value={`$${totalRevenue.toLocaleString()}`} accent="amber" small />
           </div>
         )}
 
-        {/* ALUMNOS */}
-        {tab === "students" && (
-          <div className="space-y-6">
-            {/* Filtros */}
-            <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-col md:flex-row gap-3 items-stretch md:items-end">
-              <div className="flex-1">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Buscar alumno</label>
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Nombre o correo"
-                  className="w-full rounded-lg border border-slate-200 px-4 py-2 text-sm focus:border-primary focus:outline-none"
-                />
-              </div>
-              <div className="md:w-40">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Resultados</label>
-                <div className="rounded-lg bg-slate-50 border border-slate-200 px-4 py-2 text-sm font-semibold text-ink-soft">
-                  {users.filter((u) => u.role === "student").length} alumnos
-                </div>
-              </div>
+        {/* Filters */}
+        <div className="bg-white rounded-xl border border-slate-200 p-5 mb-6 shadow-sm flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
+          <div className="flex-1 flex flex-col md:flex-row gap-3">
+            <div className="relative flex-1">
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted">🔍</span>
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar alumno por nombre, correo o teléfono..."
+                className="w-full rounded-lg border border-slate-200 pl-10 pr-4 py-2.5 text-sm focus:border-primary focus:outline-none"
+              />
             </div>
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value as any)}
+              className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium focus:border-primary focus:outline-none bg-white cursor-pointer"
+            >
+              <option value="">Todos los roles</option>
+              <option value="student">👨‍🎓 Solo Alumnos</option>
+              <option value="admin">⚙️ Solo Administradores</option>
+            </select>
+          </div>
+          <div className="text-xs text-muted font-medium">Mostrando <strong className="text-ink">{total}</strong> registros</div>
+        </div>
 
-            {/* Tabla */}
-            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-slate-50 text-muted text-xs uppercase tracking-wider">
-                    <tr>
-                      <th className="text-left px-5 py-3 font-semibold">Usuario</th>
-                      <th className="text-left px-5 py-3 font-semibold">Cursos</th>
-                      <th className="text-left px-5 py-3 font-semibold">Total pagado</th>
-                      <th className="text-left px-5 py-3 font-semibold">Registro</th>
-                      <th className="text-left px-5 py-3 font-semibold">Último acceso</th>
-                      <th className="px-5 py-3 text-right">
-                        <span className="text-xs font-semibold uppercase tracking-wider">Acciones</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {users.filter((u) => u.role === "student").length === 0 && (
-                      <tr>
-                        <td colSpan={6} className="px-5 py-10 text-center text-muted">
-                          No se encontraron alumnos.
-                        </td>
-                      </tr>
-                    )}
-                    {users.filter((u) => u.role === "student").map((u) => (
-                      <tr key={u.id} className="hover:bg-slate-50/60">
-                        <td className="px-5 py-3">
+        {/* Users table */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-slate-50 text-muted text-xs uppercase tracking-wider font-semibold border-b border-slate-100">
+                <tr>
+                  <th className="px-6 py-4">Usuario / Alumno</th>
+                  <th className="px-6 py-4">Rol</th>
+                  <th className="px-6 py-4">Cursos Habilitados</th>
+                  <th className="px-6 py-4">Pagos (Est.)</th>
+                  <th className="px-6 py-4">Registro</th>
+                  <th className="px-6 py-4 text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {users.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center text-muted text-base">No se encontraron alumnos registrados.</td>
+                  </tr>
+                ) : (
+                  users.map((u) => {
+                    const rev = u.purchasedCourses.reduce((sum, lvl) => sum + (priceMap[lvl] || 0), 0);
+                    return (
+                      <tr key={u.id} className="hover:bg-primary/[0.03] transition-colors">
+                        <td className="px-6 py-4 min-w-[220px]">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0">
+                            <div className="w-10 h-10 rounded-lg bg-slate-100 text-primary flex items-center justify-center font-bold text-sm shrink-0">
                               {u.name.charAt(0).toUpperCase()}
                             </div>
                             <div>
-                              <div className="font-semibold">{u.name}</div>
-                              <div className="text-xs text-muted">{u.email}</div>
-                              {u.phone && <div className="text-xs text-muted">{u.phone}</div>}
+                              <div className="font-bold text-ink">{u.name}</div>
+                              <div className="text-xs text-muted mt-0.5">{u.email}</div>
+                              {u.phone && <div className="text-xs text-slate-400 mt-0.5">📞 {u.phone}</div>}
                             </div>
                           </div>
                         </td>
-                        <td className="px-5 py-3">
-                          <CourseBadges courses={u.purchasedCourses} />
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`text-xs font-semibold px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5 ${
+                            u.role === "admin" ? "bg-primary/10 text-primary" : "bg-slate-100 text-ink-soft"
+                          }`}>
+                            {u.role === "admin" ? "⚙️ Admin" : "👨‍🎓 Alumno"}
+                          </span>
                         </td>
-                        <td className="px-5 py-3 font-semibold text-sm">
-                          ${userTotalPaid(u).toLocaleString()}
+                        <td className="px-6 py-4 max-w-xs">
+                          <div className="flex flex-wrap gap-1.5">
+                            {u.purchasedCourses.length === 0 && <span className="text-xs text-slate-300 italic">Sin cursos</span>}
+                            {u.purchasedCourses.map((lvl) => (
+                              <span key={lvl} className="text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 px-2 py-0.5 rounded-md uppercase">
+                                {lvl.replace("-", " ")}
+                              </span>
+                            ))}
+                          </div>
                         </td>
-                        <td className="px-5 py-3 text-xs text-muted">
-                          {new Date(u.createdAt).toLocaleDateString("es-MX")}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`font-bold ${rev > 0 ? "text-emerald-600" : "text-slate-400"}`}>${rev.toLocaleString()} MXN</span>
                         </td>
-                        <td className="px-5 py-3 text-xs text-muted">
-                          {u.lastLoginAt
-                            ? new Date(u.lastLoginAt).toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" })
-                            : "—"}
+                        <td className="px-6 py-4 text-xs text-muted whitespace-nowrap">
+                          {new Date(u.createdAt).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" })}
                         </td>
-                        <td className="px-5 py-3 text-right">
+                        <td className="px-6 py-4 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => openUser(u.id)}
-                              className="text-xs font-semibold text-primary hover:underline"
-                            >
-                              Ver
+                            <button onClick={() => selectUser(u.id)} className="px-3 py-1.5 rounded-lg font-semibold text-xs bg-slate-100 text-ink-soft hover:bg-primary hover:text-white transition-colors">
+                              📂 Ver
                             </button>
-                            <span className="text-slate-200">|</span>
-                            <button
-                              onClick={() => openUser(u.id)}
-                              className="text-xs font-semibold text-ink-soft hover:text-primary"
-                            >
-                              Editar
+                            <button onClick={() => startEdit(u)} className="w-8 h-8 rounded-lg font-semibold text-xs bg-slate-100 text-ink-soft hover:bg-amber-50 hover:text-amber-700 transition-colors flex items-center justify-center" title="Editar">
+                              ✏️
+                            </button>
+                            <button onClick={() => handleDeleteUser(u)} className="w-8 h-8 rounded-lg font-semibold text-xs bg-slate-100 text-ink-soft hover:bg-red-50 hover:text-red-600 transition-colors flex items-center justify-center" title="Eliminar">
+                              🗑️
                             </button>
                           </div>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
           </div>
-        )}
-
-        {/* ADMINS */}
-        {tab === "admins" && (
-          <div className="space-y-6">
-            <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-col md:flex-row gap-3 items-stretch md:items-end">
-              <div className="flex-1">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Buscar</label>
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Nombre o correo"
-                  className="w-full rounded-lg border border-slate-200 px-4 py-2 text-sm focus:border-primary focus:outline-none"
-                />
-              </div>
-              <div className="md:w-40">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Resultados</label>
-                <div className="rounded-lg bg-slate-50 border border-slate-200 px-4 py-2 text-sm font-semibold text-ink-soft">
-                  {users.filter((u) => u.role === "admin").length} admins
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-slate-50 text-muted text-xs uppercase tracking-wider">
-                    <tr>
-                      <th className="text-left px-5 py-3 font-semibold">Usuario</th>
-                      <th className="text-left px-5 py-3 font-semibold">Correo</th>
-                      <th className="text-left px-5 py-3 font-semibold">Registro</th>
-                      <th className="text-left px-5 py-3 font-semibold">Último acceso</th>
-                      <th className="px-5 py-3 text-right">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {users.filter((u) => u.role === "admin").length === 0 && (
-                      <tr>
-                        <td colSpan={5} className="px-5 py-10 text-center text-muted">
-                          No se encontraron administradores.
-                        </td>
-                      </tr>
-                    )}
-                    {users.filter((u) => u.role === "admin").map((u) => (
-                      <tr key={u.id} className="hover:bg-slate-50/60">
-                        <td className="px-5 py-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs shrink-0">
-                              {u.name.charAt(0).toUpperCase()}
-                            </div>
-                            <div className="font-semibold">{u.name}</div>
-                          </div>
-                        </td>
-                        <td className="px-5 py-3 text-sm">{u.email}</td>
-                        <td className="px-5 py-3 text-xs text-muted">
-                          {new Date(u.createdAt).toLocaleDateString("es-MX")}
-                        </td>
-                        <td className="px-5 py-3 text-xs text-muted">
-                          {u.lastLoginAt
-                            ? new Date(u.lastLoginAt).toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" })
-                            : "—"}
-                        </td>
-                        <td className="px-5 py-3 text-right">
-                          <button
-                            onClick={() => openUser(u.id)}
-                            className="text-xs font-semibold text-primary hover:underline"
-                          >
-                            Ver detalle →
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
 
-      {/* ======== DRAWER DETALLE / EDICIÓN ======== */}
+      {/* Drawer detail */}
       {userId && (
-        <div className="fixed inset-0 z-50 bg-black/50" onClick={closeDetail}>
-          <div
-            className="absolute right-0 top-0 bottom-0 w-full max-w-xl bg-white shadow-2xl overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header del drawer */}
-            <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between z-10">
-              <h2 className="font-bold text-lg">
-                {editMode ? "Editar usuario" : "Detalle del usuario"}
-              </h2>
-              <div className="flex items-center gap-3">
-                {!editMode && selectedUser && (
-                  <button
-                    onClick={() => setEditMode(true)}
-                    className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
-                  >
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Editar
-                  </button>
-                )}
-                <button onClick={closeDetail} className="text-muted hover:text-ink transition-colors">
-                  ✕
-                </button>
+        <div className="fixed inset-0 z-50 bg-black/60 flex justify-end" onClick={closeDetail}>
+          <div className="w-full max-w-2xl bg-white shadow-2xl flex flex-col h-full overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-primary text-white px-6 py-5 flex items-center justify-between shadow-md">
+              <div>
+                <span className="text-xs uppercase tracking-widest font-semibold text-white/70">Expediente Oficial</span>
+                <h2 className="font-bold text-xl mt-0.5">{selectedUser ? selectedUser.name : "Detalle del Alumno"}</h2>
               </div>
+              <button onClick={closeDetail} className="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors">✕</button>
             </div>
 
-            {loadingDetail && (
-              <div className="p-6 text-center text-muted text-sm">Cargando…</div>
-            )}
-            {!loadingDetail && !selectedUser && (
-              <div className="p-6 text-center text-muted text-sm">Usuario no encontrado</div>
-            )}
-
-            {/* ====== VISTA DETALLE ====== */}
-            {!loadingDetail && selectedUser && !editMode && (
-              <div className="p-6 space-y-6">
-                {/* Avatar + info */}
-                <div className="flex items-start gap-4">
-                  <div className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xl shrink-0">
+            {loadingDetail ? (
+              <div className="flex-1 grid place-items-center p-12 text-muted text-sm">Cargando expediente…</div>
+            ) : !selectedUser ? (
+              <div className="flex-1 grid place-items-center p-12 text-muted text-sm">No se pudo cargar la información.</div>
+            ) : (
+              <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8">
+                {/* Info General */}
+                <div className="bg-slate-50 rounded-xl border border-slate-200 p-6 flex items-start gap-4">
+                  <div className="w-16 h-16 rounded-2xl bg-primary text-white flex items-center justify-center font-bold text-2xl shadow-md shrink-0">
                     {selectedUser.name.charAt(0).toUpperCase()}
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold">{selectedUser.name}</h3>
-                    <div className="text-sm text-muted">{selectedUser.email}</div>
-                    {selectedUser.phone && <div className="text-sm text-muted">{selectedUser.phone}</div>}
-                    <div className="mt-2 flex items-center gap-2 text-xs">
-                      <RoleBadge role={selectedUser.role} />
-                      <span className="text-muted">ID: {selectedUser.id}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xl font-bold truncate text-ink">{selectedUser.name}</h3>
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-lg ${selectedUser.role === "admin" ? "bg-primary/10 text-primary" : "bg-slate-200 text-ink-soft"}`}>
+                        {selectedUser.role === "admin" ? "⚙️ Administrador" : "👨‍🎓 Alumno"}
+                      </span>
+                    </div>
+                    <div className="text-sm text-muted mt-1">📧 {selectedUser.email}</div>
+                    {selectedUser.phone && <div className="text-sm text-muted mt-0.5">📞 {selectedUser.phone}</div>}
+                    <div className="mt-3 pt-3 border-t border-slate-200/80 flex justify-between items-center text-xs text-slate-400">
+                      <span>ID: {selectedUser.id}</span>
+                      <span>Registrado: {new Date(selectedUser.createdAt).toLocaleDateString("es-MX")}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Resumen de pago */}
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold">Total pagado</span>
-                    <span className="text-xl font-bold text-primary">${userTotalPaid(selectedUser).toLocaleString()} MXN</span>
+                {/* Payments / Courses */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-bold text-lg text-ink">Cursos y Pagos del Alumno</h4>
+                    <span className="text-xs text-muted">Click para habilitar o revocar</span>
                   </div>
-                  <div className="mt-2 text-xs text-muted">
-                    Registro: {new Date(selectedUser.createdAt).toLocaleDateString("es-MX", { dateStyle: "long" })}
-                    {selectedUser.lastLoginAt && (
-                      <> · Último acceso: {new Date(selectedUser.lastLoginAt).toLocaleDateString("es-MX")}</>
-                    )}
-                  </div>
-                </div>
-
-                {/* Cursos adquiridos */}
-                <Section title="Cursos adquiridos" count={selectedUser.purchasedCourses.length}>
-                  {selectedUser.purchasedCourses.length === 0 ? (
-                    <Empty text="Sin cursos comprados" />
-                  ) : (
-                    <div className="space-y-2">
-                      {selectedUser.purchasedCourses.map((lvl) => {
-                        const c = courses.find((co) => co.id === lvl);
-                        return (
-                          <div key={lvl} className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3">
-                            <div>
-                              <div className="font-semibold text-sm">{c?.title ?? lvl}</div>
-                              <div className="text-xs text-emerald-600 mt-0.5">
-                                Comprado: {selectedUser.purchasedAt[lvl]
-                                  ? new Date(selectedUser.purchasedAt[lvl]!).toLocaleDateString("es-MX", { dateStyle: "long" })
-                                  : "—"}
-                              </div>
-                            </div>
-                            <span className="text-sm font-bold text-emerald-700">${priceMap[lvl]?.toLocaleString()}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </Section>
-
-                {/* Intentos de examen */}
-                <Section title="Intentos de examen" count={userAttempts.length}>
-                  {userAttempts.length === 0 ? (
-                    <Empty text="Sin intentos registrados" />
-                  ) : (
-                    <div className="space-y-2">
-                      {userAttempts.slice().reverse().map((a) => (
-                        <div key={a.id} className="flex items-center justify-between border border-slate-200 rounded-lg px-4 py-3">
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    {([
+                      { id: "basico", title: "Curso Básico", price: priceMap.basico },
+                      { id: "intermedio", title: "Curso Intermedio", price: priceMap.intermedio },
+                      { id: "experto", title: "Curso Experto", price: priceMap.experto },
+                      { id: "primeros-auxilios", title: "Primeros Auxilios", price: priceMap["primeros-auxilios"] },
+                    ] as const).map((course) => {
+                      const active = selectedUser.purchasedCourses.includes(course.id as any);
+                      return (
+                        <div key={course.id} className={`rounded-xl border p-4 flex flex-col justify-between ${active ? "bg-emerald-50/70 border-emerald-300" : "bg-white border-slate-200"}`}>
                           <div>
-                            <div className="font-semibold text-sm capitalize">{a.level}</div>
-                            <div className="text-xs text-muted mt-0.5">
-                              {a.correct}/{a.total} correctas ·{" "}
-                              {new Date(a.date).toLocaleString("es-MX", { dateStyle: "medium", timeStyle: "short" })}
+                            <div className="flex items-center justify-between text-xs font-semibold">
+                              <span className="uppercase text-secondary">{course.id.replace("-", " ")}</span>
+                              <span className={active ? "text-emerald-700 font-bold" : "text-muted"}>${course.price.toLocaleString()} MXN</span>
                             </div>
+                            <div className="font-bold text-sm mt-1 text-ink">{course.title}</div>
+                          </div>
+                          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                            <span className={`text-xs font-semibold ${active ? "text-emerald-700" : "text-slate-400"}`}>{active ? "✅ Habilitado (Pagado)" : "❌ No pagado"}</span>
+                            <button
+                              type="button"
+                              onClick={() => (active ? handleRevokeCourse(course.id as any) : handleGrantCourse(course.id as any))}
+                              className={`text-xs px-3 py-1.5 rounded-lg font-bold transition-colors ${active ? "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100" : "bg-primary text-white hover:bg-primary-dark"}`}
+                            >
+                              {active ? "Revocar" : "Habilitar"}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Attempts */}
+                <div>
+                  <h4 className="font-bold text-lg text-ink mb-3">Intentos de Examen ({userAttempts.length})</h4>
+                  {userAttempts.length === 0 ? (
+                    <div className="bg-slate-50 rounded-xl border border-slate-200 p-8 text-center text-muted text-sm italic">Este alumno aún no ha realizado exámenes.</div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {userAttempts.slice().reverse().map((att) => (
+                        <div key={att.id} className="bg-white rounded-xl border border-slate-200 p-4 flex items-center justify-between gap-4">
+                          <div>
+                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${att.passed ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"}`}>
+                              {att.passed ? "Aprobado 🏆" : "Reprobado 📉"}
+                            </span>
+                            <div className="font-bold text-base mt-1 capitalize text-ink">Examen {att.level.replace("-", " ")}</div>
+                            <div className="text-xs text-muted mt-0.5">{new Date(att.date).toLocaleString("es-MX", { dateStyle: "long", timeStyle: "short" })}</div>
                           </div>
                           <div className="text-right">
-                            <div className="font-bold text-lg">{a.score}%</div>
-                            <div className={`text-xs font-semibold ${a.passed ? "text-emerald-700" : "text-red-600"}`}>
-                              {a.passed ? "APROBADO" : "REPROBADO"}
-                            </div>
+                            <div className={`text-2xl font-black ${att.passed ? "text-emerald-600" : "text-red-600"}`}>{att.score}%</div>
+                            <div className="text-xs text-muted">{att.correct} / {att.total} aciertos</div>
                           </div>
                         </div>
                       ))}
                     </div>
                   )}
-                </Section>
+                </div>
 
-                {/* Certificados */}
-                <Section title="Certificados emitidos" count={userCerts.length}>
+                {/* Certificates */}
+                <div>
+                  <h4 className="font-bold text-lg text-ink mb-3">Certificados Oficiales ({userCerts.length})</h4>
                   {userCerts.length === 0 ? (
-                    <Empty text="Sin certificados" />
+                    <div className="bg-slate-50 rounded-xl border border-slate-200 p-8 text-center text-muted text-sm italic">No se han emitido certificados.</div>
                   ) : (
-                    <div className="space-y-2">
-                      {userCerts.map((c) => (
-                        <div key={c.id} className="bg-primary/5 border border-primary/20 rounded-lg px-4 py-3 flex items-start justify-between gap-3">
+                    <div className="space-y-3">
+                      {userCerts.map((cert) => (
+                        <div key={cert.id} className="bg-primary/5 rounded-xl border border-primary/20 p-5 flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-sm capitalize">{c.level}</div>
-                            <div className="text-xs text-muted mt-0.5">
-                              {c.date} · Calificación: <span className="font-semibold text-primary">{c.score}%</span>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-xs font-bold text-primary uppercase tracking-wider">CERTIFICADO OFICIAL</span>
+                              <span className="text-xs bg-primary/10 text-primary font-bold px-2 py-0.5 rounded-md">Folio: {cert.certificateId}</span>
                             </div>
-                            <div className="text-[10px] font-mono text-muted mt-1">Folio: {c.certificateId}</div>
+                            <h5 className="text-lg font-bold mt-1 text-ink capitalize">{cert.level === "primeros-auxilios" ? "Curso de Primeros Auxilios" : `Curso ${cert.level}`}</h5>
+                            <div className="text-xs text-muted mt-1">Emitido el {cert.date} · Calificación: <strong className="text-primary font-bold">{cert.score}%</strong></div>
                           </div>
                           <button
+                            type="button"
                             onClick={() => downloadCertificate({
-                              studentName: selectedUser?.name || "Alumno",
-                              email: selectedUser?.email || "",
-                              level: c.level, score: c.score, date: c.date, certificateId: c.certificateId,
+                              studentName: selectedUser.name,
+                              email: selectedUser.email,
+                              level: cert.level as any,
+                              score: cert.score,
+                              date: cert.date,
+                              certificateId: cert.certificateId,
                             })}
-                            className="shrink-0 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary-dark px-3 py-1.5 rounded border border-primary/20 hover:bg-primary/10 transition-colors"
+                            className="btn-primary !py-2.5 !px-4 gap-1.5 shrink-0 text-xs"
                           >
-                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
-                            PDF
+                            Descargar PDF
                           </button>
                         </div>
                       ))}
                     </div>
                   )}
-                </Section>
-
-                {/* Acciones peligrosas */}
-                <div className="pt-4 border-t border-slate-200 space-y-3">
-                  <button
-                    onClick={toggleRole}
-                    className="w-full text-center px-4 py-2.5 rounded-lg border border-slate-200 text-sm font-semibold text-ink-soft hover:border-primary hover:text-primary transition-colors"
-                  >
-                    {selectedUser.role === "admin" ? "Degradar a Alumno" : "Ascender a Admin"}
-                  </button>
-                  <button
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="w-full text-center px-4 py-2.5 rounded-lg border border-red-200 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    Eliminar usuario
-                  </button>
                 </div>
               </div>
             )}
 
-            {/* ====== VISTA EDICIÓN ====== */}
-            {!loadingDetail && selectedUser && editMode && (
-              <div className="p-6 space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xl shrink-0">
-                    {editForm.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-xs text-muted mb-3">Editando: {selectedUser.email}</div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <Field label="Nombre completo">
-                    <input
-                      value={editForm.name}
-                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
-                    />
-                  </Field>
-                  <Field label="Correo electrónico">
-                    <input
-                      type="email"
-                      value={editForm.email}
-                      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                      className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
-                    />
-                  </Field>
-                  <Field label="Teléfono">
-                    <input
-                      value={editForm.phone}
-                      onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                      className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
-                      placeholder="Opcional"
-                    />
-                  </Field>
-                  <Field label="Rol actual">
-                    <div className="flex items-center gap-3">
-                      <RoleBadge role={selectedUser.role} />
-                      <button
-                        onClick={toggleRole}
-                        className="text-xs text-primary font-semibold hover:underline"
-                      >
-                        Cambiar a {selectedUser.role === "admin" ? "Alumno" : "Admin"}
-                      </button>
-                    </div>
-                  </Field>
-                  <Field label="ID del usuario">
-                    <div className="text-xs font-mono text-muted bg-slate-50 rounded-lg border border-slate-200 px-4 py-2.5">
-                      {selectedUser.id}
-                    </div>
-                  </Field>
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <button
-                    onClick={() => setEditMode(false)}
-                    className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 text-sm font-semibold text-ink-soft hover:bg-slate-50 transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={saveEdit}
-                    disabled={editSaving || !editForm.name.trim() || !editForm.email.trim()}
-                    className="flex-1 btn-primary disabled:opacity-50"
-                  >
-                    {editSaving ? "Guardando…" : "Guardar cambios"}
-                  </button>
-                </div>
+            {selectedUser && (
+              <div className="bg-slate-50 border-t border-slate-200 px-6 py-4 flex items-center justify-between">
+                <button type="button" onClick={() => startEdit(selectedUser)} className="btn-ghost !py-2">✏️ Editar Datos</button>
+                <button type="button" onClick={() => handleDeleteUser(selectedUser)} className="btn-ghost !py-2 !text-red-600 hover:!border-red-300 hover:!bg-red-50">🗑️ Eliminar Expediente</button>
               </div>
             )}
           </div>
+        </div>
+      )}
 
-          {/* ====== MODAL CONFIRMACIÓN ELIMINAR ====== */}
-          {showDeleteConfirm && selectedUser && (
-            <div className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-4">
-              <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
-                <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-2xl mx-auto">
-                  ⚠
-                </div>
-                <h3 className="mt-4 text-xl font-bold text-center">Eliminar usuario</h3>
-                <p className="mt-3 text-sm text-muted text-center leading-relaxed">
-                  ¿Estás seguro de eliminar a <strong className="text-ink">{selectedUser.name}</strong> ({selectedUser.email})?
-                  <br />
-                  <span className="text-red-600 font-semibold">Esta acción no se puede deshacer.</span>
-                  <br />
-                  Se eliminarán todos sus intentos de examen y certificados.
-                </p>
-                <div className="mt-6 flex gap-3">
-                  <button
-                    onClick={() => setShowDeleteConfirm(false)}
-                    className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 text-sm font-semibold text-ink-soft hover:bg-slate-50 transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={confirmDelete}
-                    disabled={deleting}
-                    className="flex-1 px-4 py-2.5 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors disabled:opacity-50"
-                  >
-                    {deleting ? "Eliminando…" : "Sí, eliminar"}
-                  </button>
-                </div>
-              </div>
+      {/* Create student modal */}
+      {creating && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setCreating(false)}>
+          <div className="bg-white rounded-2xl max-w-md w-full p-7 shadow-2xl text-left" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <h3 className="text-xl font-bold text-ink">Registrar Nuevo Alumno</h3>
+              <button onClick={() => setCreating(false)} className="text-muted hover:text-ink">✕</button>
             </div>
-          )}
+            <form onSubmit={handleCreateStudent} className="mt-5 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Nombre completo</label>
+                <input required value={createForm.name} onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })} placeholder="Ej. Juan Pérez" className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Correo electrónico</label>
+                <input required type="email" value={createForm.email} onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })} placeholder="alumno@ejemplo.com" className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Teléfono (opcional)</label>
+                <input value={createForm.phone} onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })} placeholder="55 1234 5678" className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Contraseña Temporal</label>
+                <input required value={createForm.password} onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })} className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none font-mono text-xs" />
+                <span className="text-[11px] text-muted mt-1 block">El alumno podrá cambiarla al iniciar sesión.</span>
+              </div>
+              <div className="pt-4 flex justify-end gap-3 border-t border-slate-100">
+                <button type="button" onClick={() => setCreating(false)} className="btn-ghost">Cancelar</button>
+                <button type="submit" className="btn-primary">Guardar Alumno ✓</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit user modal */}
+      {editingUser && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setEditingUser(null)}>
+          <div className="bg-white rounded-2xl max-w-md w-full p-7 shadow-2xl text-left" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <h3 className="text-xl font-bold text-ink">Editar Datos del Alumno</h3>
+              <button onClick={() => setEditingUser(null)} className="text-muted hover:text-ink">✕</button>
+            </div>
+            <form onSubmit={handleEditUser} className="mt-5 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Nombre completo</label>
+                <input required value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Correo electrónico</label>
+                <input required type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Teléfono</label>
+                <input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Rol</label>
+                <select value={editForm.role} onChange={(e) => setEditForm({ ...editForm, role: e.target.value as any })} className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none bg-white cursor-pointer font-medium">
+                  <option value="student">👨‍🎓 Alumno</option>
+                  <option value="admin">⚙️ Administrador</option>
+                </select>
+              </div>
+              <div className="pt-4 flex justify-end gap-3 border-t border-slate-100">
+                <button type="button" onClick={() => setEditingUser(null)} className="btn-ghost">Cancelar</button>
+                <button type="submit" className="btn-primary">Actualizar Cambios ✓</button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
   );
 }
 
-// ========================
-// COMPONENTES AUXILIARES
-// ========================
-
-function StatCard({ label, value, accent, small }: {
-  label: string;
-  value: string | number;
-  accent?: "primary" | "secondary" | "emerald" | "amber";
-  small?: boolean;
-}) {
-  const c =
-    accent === "emerald" ? "text-emerald-600"
-    : accent === "amber" ? "text-amber-600"
-    : accent === "primary" ? "text-primary"
-    : accent === "secondary" ? "text-secondary"
-    : "text-ink";
+function StatCard({ label, value, accent, small }: { label: string; value: string | number; accent?: "primary" | "secondary" | "emerald" | "amber"; small?: boolean }) {
+  const accentColor =
+    accent === "emerald" ? "text-emerald-600" :
+    accent === "amber" ? "text-amber-600" :
+    accent === "primary" ? "text-primary" :
+    accent === "secondary" ? "text-secondary" : "text-ink";
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-4">
-      <div className="text-xs uppercase tracking-wider text-muted font-semibold">{label}</div>
-      <div className={`mt-1 ${small ? "text-lg" : "text-2xl"} font-bold ${c}`}>{value}</div>
+    <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+      <div className="text-xs uppercase tracking-wider text-muted font-bold truncate">{label}</div>
+      <div className={`mt-2 ${small ? "text-xl" : "text-3xl"} font-black ${accentColor}`}>{value}</div>
     </div>
   );
-}
-
-function RoleBadge({ role }: { role: string }) {
-  return (
-    <span className={`text-xs font-semibold px-2 py-0.5 rounded ${
-      role === "admin" ? "bg-primary/10 text-primary" : "bg-slate-100 text-ink-soft"
-    }`}>
-      {role === "admin" ? "Admin" : "Alumno"}
-    </span>
-  );
-}
-
-function CourseBadges({ courses: list }: { courses: CourseLevel[] }) {
-  if (list.length === 0) return <span className="text-xs text-muted">—</span>;
-  return (
-    <div className="flex flex-wrap gap-1">
-      {list.map((lvl) => (
-        <span key={lvl} className="text-[10px] font-semibold bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded">
-          {lvl}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-function Section({ title, count, children }: { title: string; count: number; children: React.ReactNode }) {
-  return (
-    <div>
-      <h4 className="font-semibold text-sm mb-2">{title} <span className="text-muted font-normal">({count})</span></h4>
-      {children}
-    </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">{label}</label>
-      {children}
-    </div>
-  );
-}
-
-function Empty({ text }: { text: string }) {
-  return <div className="text-sm text-muted py-2">{text}</div>;
 }

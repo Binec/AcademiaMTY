@@ -82,7 +82,7 @@ export default function Cursos() {
           </div>
 
           {/* Testimonial */}
-          <div className="mt-10 bg-slate-50 rounded-xl p-10 text-center">
+          <div className="mt-10 bg-white rounded-xl border border-slate-100 p-10 text-center">
             <div className="text-amber-500 text-sm mb-4">★★★★★</div>
             <p className="text-ink-soft max-w-2xl mx-auto">
               "El proceso fue sencillo. Pagué con tarjeta y al día siguiente ya tenía mi horario confirmado."

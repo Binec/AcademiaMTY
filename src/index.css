@@ -1,22 +1,22 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #1a365d;
-  --color-primary-dark: #0f2440;
-  --color-primary-light: #2c5282;
-  --color-secondary: #2b6cb0;
-  --color-secondary-dark: #2c5282;
-  --color-accent: #c6a55a;
-  --color-accent-dark: #b8963f;
+  --color-primary: #0E213F;
+  --color-primary-dark: #0a172a;
+  --color-primary-light: #1a365d;
+  --color-secondary: #B39241;
+  --color-secondary-dark: #967a32;
+  --color-accent: #B39241;
+  --color-accent-dark: #967a32;
   --color-danger: #c53030;
-  --color-ink: #1a202c;
+  --color-ink: #0E213F;
   --color-ink-soft: #4a5568;
   --color-muted: #718096;
-  --color-slate-50: #f7fafc;
-  --color-slate-100: #edf2f7;
+  --color-slate-50: #FFF6ED;
+  --color-slate-100: #ECECEC;
   --color-slate-200: #e2e8f0;
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-display: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Montserrat', system-ui, -apple-system, sans-serif;
+  --font-display: 'Montserrat', system-ui, -apple-system, sans-serif;
 }
 
 html {
@@ -47,11 +47,11 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-primary-dark active:bg-primary-dark;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-secondary px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-secondary-dark active:bg-secondary-dark;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-secondary px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-secondary-dark;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-primary-dark;
   }
 
   .btn-outline {
@@ -89,7 +89,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Hero - clean professional gradient */
 .hero-bg {
-  background: linear-gradient(160deg, #0f2440 0%, #1a365d 50%, #2c5282 100%);
+  background: linear-gradient(160deg, #0a172a 0%, #0E213F 50%, #1a365d 100%);
   position: relative;
 }
 

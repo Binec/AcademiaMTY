@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
 
 const instructors = [
-  { name: "Ing. Pedro Martínez", role: "Director / Instructor Senior", years: "20 años", exp: "Conducción defensiva y emergencias" },
-  { name: "Luz María Hernández", role: "Instructora Certificada", years: "12 años", exp: "Alumnos principiantes" },
-  { name: "Carlos Ríos", role: "Instructor Intermedio", years: "10 años", exp: "Manejo en ciudad y autopista" },
-  { name: "Dra. Ana Solís", role: "Coordinadora Académica", years: "15 años", exp: "Diseño curricular y evaluaciones" },
+  { name: "Ing. Pedro Martínez", role: "Director / Instructor Senior", years: "20 años", exp: "Conducción defensiva y emergencias", image: "https://images.pexels.com/photos/28442318/pexels-photo-28442318.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" },
+  { name: "Luz María Hernández", role: "Instructora Certificada", years: "12 años", exp: "Alumnos principiantes", image: "https://images.pexels.com/photos/7752788/pexels-photo-7752788.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" },
+  { name: "Carlos Ríos", role: "Instructor Intermedio", years: "10 años", exp: "Manejo en ciudad y autopista", image: "https://images.pexels.com/photos/28442318/pexels-photo-28442318.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" },
+  { name: "Dra. Ana Solís", role: "Coordinadora Académica", years: "15 años", exp: "Diseño curricular y evaluaciones", image: "https://images.pexels.com/photos/25651531/pexels-photo-25651531.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" },
 ];
 
 const values = [
@@ -43,7 +43,7 @@ export default function Nosotros() {
                 { n: "8,500+", l: "Alumnos" },
                 { n: "20", l: "Instructores" },
               ].map((s) => (
-                <div key={s.l} className="rounded-xl bg-slate-50 border border-slate-100 p-5 text-center">
+                <div key={s.l} className="rounded-xl bg-white border border-primary p-5 text-center shadow-sm">
                   <div className="text-2xl font-bold text-primary">{s.n}</div>
                   <div className="text-xs text-muted mt-1">{s.l}</div>
                 </div>
@@ -51,8 +51,12 @@ export default function Nosotros() {
             </div>
           </div>
           <div className="relative">
-            <div className="aspect-[4/3] rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
-              <div className="text-8xl opacity-30">🚗</div>
+            <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-slate-100 shadow-xl">
+              <img
+                src="https://images.pexels.com/photos/9518016/pexels-photo-9518016.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200"
+                alt="Alumno aprendiendo a conducir con instructor certificado"
+                className="h-full w-full object-cover"
+              />
             </div>
             <div className="absolute -bottom-6 -left-6 bg-white rounded-xl shadow-lg border border-slate-100 p-5 max-w-[220px]">
               <div className="font-semibold text-sm">Certificación oficial</div>
@@ -62,7 +66,7 @@ export default function Nosotros() {
         </div>
       </section>
 
-      <section className="py-24 bg-slate-50">
+      <section className="py-24 bg-white">
         <div className="container-x">
           <div className="text-center max-w-2xl mx-auto mb-14">
             <div className="eyebrow mb-3">Nuestra esencia</div>
@@ -89,10 +93,10 @@ export default function Nosotros() {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {instructors.map((p) => (
               <div key={p.name} className="bg-white rounded-xl border border-slate-100 p-6 text-center">
-                <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center text-lg font-bold text-primary mx-auto">
-                  {p.name.split(" ").slice(-2).map((n) => n[0]).join("")}
+                <div className="w-24 h-24 rounded-full overflow-hidden mx-auto mb-4 border-2 border-primary/10">
+                  <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
                 </div>
-                <h3 className="mt-4 font-semibold text-sm">{p.name}</h3>
+                <h3 className="mt-2 font-semibold text-sm">{p.name}</h3>
                 <div className="text-xs text-secondary font-medium mt-1">{p.role}</div>
                 <div className="mt-4 text-xs text-muted space-y-1">
                   <div>{p.years} de experiencia</div>

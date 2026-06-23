@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" role="img" aria-labelledby="title desc">
+  <title id="title">AM Monterrey Academia</title>
+  <desc id="desc">Logo circular de AM Monterrey Academia.</desc>
+  
+  <!-- Círculo exterior azul -->
+  <circle cx="250" cy="250" r="230" fill="#0E213F"/>
+  
+  <!-- Círculo interior crema -->
+  <circle cx="250" cy="250" r="185" fill="#ECECEC"/>
+  
+  <!-- Texto circular blanco -->
+  <defs>
+    <path id="textPath" d="M 250, 250 m -205, 0 a 205,205 0 1,1 410,0 a 205,205 0 1,1 -410,0" />
+  </defs>
+  <text font-family="Inter, Arial, sans-serif" font-size="28" font-weight="700" fill="#FFFFFF" letter-spacing="4">
+    <textPath xlink:href="#textPath" startOffset="50%" text-anchor="middle">
+      ACADEMIA MONTERREY - CRECIMIENTO PERSONAL Y PROFESIONAL -
+    </textPath>
+  </text>
+
+  <!-- Escudo Central -->
+  <g transform="translate(172, 165) scale(0.52)">
+    <!-- Forma del escudo -->
+    <path d="M42 67l27-28c13 8 27 10 40 0 13 8 27 10 40 0l27 28c-12 17-17 33-15 52v80c0 40 40 60 80 80-40-20-80-40-80-80" fill="none" stroke="#0E213F" stroke-width="12" stroke-linejoin="round" transform="translate(50, 20)"/>
+    <path d="M150 50 L150 350" stroke="#0E213F" stroke-width="12" opacity="0"/>
+    
+    <!-- Contenido del escudo (Simulado del logo) -->
+    <rect x="50" y="50" width="200" height="250" rx="20" fill="none" stroke="#0E213F" stroke-width="15"/>
+    <text x="150" y="140" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="80" font-weight="900" font-style="italic" fill="#0E213F">AM</text>
+    
+    <!-- Listón Dorado -->
+    <path d="M20 160h260l-20 35 20 35H20l20-35-20-35z" fill="#B39241"/>
+    <text x="150" y="210" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="800" fill="#ffffff" letter-spacing="2">MONTERREY</text>
+    
+    <!-- Caminos/Líneas inferiores -->
+    <path d="M60 270 L240 230 M60 290 L240 250 M60 310 L240 270" stroke="#B39241" stroke-width="10" stroke-linecap="round"/>
+  </g>
+</svg>

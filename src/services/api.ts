@@ -160,18 +160,39 @@ export async function adminGetUserDetail(userId: string) {
   return { user, attempts, certificates };
 }
 
-export async function adminUpdateUser(userId: string, patch: Partial<Pick<db.DbUser, "name" | "email" | "phone" | "role">>) {
+export async function adminUpdateUser(id: string, patch: Partial<db.DbUser>) {
   requireAdmin();
-  await delay(200);
-  const updated = db.updateUser(userId, patch);
-  if (!updated) throw new Error("Usuario no encontrado");
-  return updated;
+  await delay(150);
+  return db.updateUser(id, patch);
 }
 
-export async function adminDeleteUser(userId: string) {
+export async function adminDeleteUser(id: string) {
+  requireAdmin();
+  await delay(150);
+  return db.deleteUser(id);
+}
+
+export async function adminGrantCourse(userId: string, level: db.CourseLevel) {
+  requireAdmin();
+  await delay(100);
+  return db.grantAccess(userId, level);
+}
+
+export async function adminRevokeCourse(userId: string, level: db.CourseLevel) {
+  requireAdmin();
+  await delay(100);
+  return db.revokeAccess(userId, level);
+}
+
+export async function adminCreateStudent(data: { name: string; email: string; phone?: string; password?: string }) {
   requireAdmin();
   await delay(200);
-  const ok = db.deleteUser(userId);
-  if (!ok) throw new Error("Usuario no encontrado");
-  return { ok: true as const };
+  const res = await db.createUser({
+    name: data.name,
+    email: data.email,
+    phone: data.phone,
+    password: data.password || "student123",
+    role: "student",
+  });
+  return res;
 }

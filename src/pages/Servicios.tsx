@@ -54,7 +54,7 @@ export default function Servicios() {
         </div>
       </section>
 
-      <section className="py-24 bg-slate-50">
+      <section className="py-24 bg-white">
         <div className="container-x">
           <div className="max-w-2xl mx-auto text-center mb-14">
             <div className="eyebrow mb-3">Planes</div>

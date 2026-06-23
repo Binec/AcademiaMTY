@@ -93,30 +93,150 @@ function uid(prefix: string): string {
 
 export async function ensureSeed(): Promise<void> {
   const users = read<DbUser[]>(USERS_KEY, []);
-  let changed = false;
+  const targetAdminEmail = "admin@user.com";
+  const adminIdx = users.findIndex((u) => u.email.toLowerCase() === targetAdminEmail);
 
-  const seeds: { name: string; email: string; password: string }[] = [
-    { name: "Administrador", email: "admin@autoescuelapro.com", password: "admin123456" },
-    { name: "Admin User", email: "admin@user.com", password: "123456" },
-  ];
+  // Aseguramos que exista y que su contraseña sea la correcta ('123456') si se actualizó
+  const expectedHash = await bcrypt.hash("123456", SALT_ROUNDS);
 
-  for (const s of seeds) {
-    if (!users.find((u) => u.email.toLowerCase() === s.email)) {
-      const hash = await bcrypt.hash(s.password, SALT_ROUNDS);
-      users.push({
-        id: uid("u"),
-        name: s.name,
-        email: s.email,
-        passwordHash: hash,
-        role: "admin",
-        purchasedCourses: [],
-        purchasedAt: {},
-        createdAt: new Date().toISOString(),
-      });
-      changed = true;
+  if (adminIdx < 0) {
+    const mainAdmin: DbUser = {
+      id: uid("u"),
+      name: "Super Administrador",
+      email: targetAdminEmail,
+      passwordHash: expectedHash,
+      role: "admin",
+      purchasedCourses: ["basico", "intermedio", "experto", "primeros-auxilios"],
+      purchasedAt: {
+        basico: new Date().toISOString(),
+        intermedio: new Date().toISOString(),
+        experto: new Date().toISOString(),
+        "primeros-auxilios": new Date().toISOString(),
+      },
+      createdAt: new Date().toISOString(),
+    };
+    users.push(mainAdmin);
+    write(USERS_KEY, users);
+  } else {
+    // Forzamos la actualización del password si ya estaba en el local storage
+    const currentAdmin = users[adminIdx];
+    const match = await bcrypt.compare("123456", currentAdmin.passwordHash);
+    if (!match) {
+      currentAdmin.passwordHash = expectedHash;
+      users[adminIdx] = currentAdmin;
+      write(USERS_KEY, users);
     }
   }
-  if (changed) write(USERS_KEY, users);
+
+  // Si solo hay 1 usuario (el admin) o menos de 3, creamos estudiantes de prueba realistas
+  if (users.length <= 1) {
+    const defaultPw = await bcrypt.hash("student123", SALT_ROUNDS);
+    const sampleStudents: DbUser[] = [
+      {
+        id: "u_sample_1",
+        name: "Carlos Rivera",
+        email: "carlos@gmail.com",
+        phone: "55 8192 3841",
+        passwordHash: defaultPw,
+        role: "student",
+        purchasedCourses: ["basico", "primeros-auxilios"],
+        purchasedAt: { basico: "2026-01-10T10:00:00.000Z", "primeros-auxilios": "2026-01-12T14:30:00.000Z" },
+        createdAt: "2026-01-10T09:30:00.000Z",
+      },
+      {
+        id: "u_sample_2",
+        name: "Mariana Gómez",
+        email: "mariana@hotmail.com",
+        phone: "55 9128 4721",
+        passwordHash: defaultPw,
+        role: "student",
+        purchasedCourses: ["intermedio"],
+        purchasedAt: { intermedio: "2026-01-15T11:15:00.000Z" },
+        createdAt: "2026-01-15T10:45:00.000Z",
+      },
+      {
+        id: "u_sample_3",
+        name: "Fernando Sánchez",
+        email: "fer@yahoo.com",
+        phone: "55 7182 9381",
+        passwordHash: defaultPw,
+        role: "student",
+        purchasedCourses: ["experto", "primeros-auxilios"],
+        purchasedAt: { experto: "2026-02-01T16:00:00.000Z", "primeros-auxilios": "2026-02-02T09:00:00.000Z" },
+        createdAt: "2026-02-01T15:20:00.000Z",
+      },
+      {
+        id: "u_sample_4",
+        name: "Sofía Hernández",
+        email: "sofia@outlook.com",
+        phone: "55 6172 8392",
+        passwordHash: defaultPw,
+        role: "student",
+        purchasedCourses: ["basico"],
+        purchasedAt: { basico: "2026-02-10T12:00:00.000Z" },
+        createdAt: "2026-02-10T11:30:00.000Z",
+      },
+    ];
+
+    const attempts = read<DbAttempt[]>(ATTEMPTS_KEY, []);
+    const certs = read<DbCertificate[]>(CERTIFICATES_KEY, []);
+
+    // Agregamos intentos y certificados para los sample students
+    // Carlos aprobó basico y tiene certificado
+    attempts.push({
+      id: "att_s1_1",
+      userId: "u_sample_1",
+      level: "basico",
+      score: 90,
+      correct: 27,
+      total: 30,
+      passed: true,
+      date: "2026-01-14T18:20:00.000Z",
+    });
+    certs.push({
+      id: "cert_s1_1",
+      userId: "u_sample_1",
+      level: "basico",
+      score: 90,
+      date: "14 de enero de 2026",
+      certificateId: "AEP-BASICO-CR90",
+    });
+
+    // Mariana reprobó intermedio una vez, luego aprobó
+    attempts.push({
+      id: "att_s2_1",
+      userId: "u_sample_2",
+      level: "intermedio",
+      score: 70,
+      correct: 21,
+      total: 30,
+      passed: false,
+      date: "2026-01-18T10:00:00.000Z",
+    });
+    attempts.push({
+      id: "att_s2_2",
+      userId: "u_sample_2",
+      level: "intermedio",
+      score: 96,
+      correct: 29,
+      total: 30,
+      passed: true,
+      date: "2026-01-20T12:30:00.000Z",
+    });
+    certs.push({
+      id: "cert_s2_1",
+      userId: "u_sample_2",
+      level: "intermedio",
+      score: 96,
+      date: "20 de enero de 2026",
+      certificateId: "AEP-INTER-MG96",
+    });
+
+    sampleStudents.forEach((s) => users.push(s));
+    write(USERS_KEY, users);
+    write(ATTEMPTS_KEY, attempts);
+    write(CERTIFICATES_KEY, certs);
+  }
 }
 
 // ============================================================
@@ -180,6 +300,22 @@ export function updateUser(id: string, patch: Partial<DbUser>): DbUser | undefin
   users[idx] = { ...users[idx], ...patch };
   write(USERS_KEY, users);
   return users[idx];
+}
+
+export function deleteUser(id: string): boolean {
+  let users = read<DbUser[]>(USERS_KEY, []);
+  const idx = users.findIndex((u) => u.id === id);
+  if (idx < 0) return false;
+  users = users.filter((u) => u.id !== id);
+  write(USERS_KEY, users);
+
+  // Cascade delete attempts & certificates
+  const attempts = read<DbAttempt[]>(ATTEMPTS_KEY, []).filter((a) => a.userId !== id);
+  write(ATTEMPTS_KEY, attempts);
+
+  const certs = read<DbCertificate[]>(CERTIFICATES_KEY, []).filter((c) => c.userId !== id);
+  write(CERTIFICATES_KEY, certs);
+  return true;
 }
 
 export function listUsers(opts: { role?: UserRole; search?: string; limit?: number; skip?: number } = {}): {
@@ -287,22 +423,6 @@ export function listCertificates(opts: { userId?: string; level?: CourseLevel } 
 // PURCHASES (acceso a exámenes)
 // ============================================================
 
-export function deleteUser(userId: string): boolean {
-  const users = read<DbUser[]>(USERS_KEY, []);
-  const idx = users.findIndex((u) => u.id === userId);
-  if (idx < 0) return false;
-  users.splice(idx, 1);
-  write(USERS_KEY, users);
-  // También borrar intentos y certificados del usuario
-  const attempts = read<DbAttempt[]>(ATTEMPTS_KEY, []);
-  const filteredAttempts = attempts.filter((a) => a.userId !== userId);
-  if (filteredAttempts.length !== attempts.length) write(ATTEMPTS_KEY, filteredAttempts);
-  const certs = read<DbCertificate[]>(CERTIFICATES_KEY, []);
-  const filteredCerts = certs.filter((c) => c.userId !== userId);
-  if (filteredCerts.length !== certs.length) write(CERTIFICATES_KEY, filteredCerts);
-  return true;
-}
-
 export function grantAccess(userId: string, level: CourseLevel): boolean {
   const users = read<DbUser[]>(USERS_KEY, []);
   const idx = users.findIndex((u) => u.id === userId);
@@ -311,6 +431,21 @@ export function grantAccess(userId: string, level: CourseLevel): boolean {
   if (user.purchasedCourses.includes(level)) return false;
   user.purchasedCourses = [...user.purchasedCourses, level];
   user.purchasedAt = { ...user.purchasedAt, [level]: new Date().toISOString() };
+  users[idx] = user;
+  write(USERS_KEY, users);
+  return true;
+}
+
+export function revokeAccess(userId: string, level: CourseLevel): boolean {
+  const users = read<DbUser[]>(USERS_KEY, []);
+  const idx = users.findIndex((u) => u.id === userId);
+  if (idx < 0) return false;
+  const user = users[idx];
+  if (!user.purchasedCourses.includes(level)) return false;
+  user.purchasedCourses = user.purchasedCourses.filter((l) => l !== level);
+  const dates = { ...user.purchasedAt };
+  delete dates[level];
+  user.purchasedAt = dates;
   users[idx] = user;
   write(USERS_KEY, users);
   return true;

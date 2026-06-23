@@ -11,13 +11,13 @@ export default function Footer() {
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
           <div className="lg:col-span-1">
-            <div className="flex items-center gap-2.5 mb-5">
-              <div className="w-8 h-8 rounded-lg bg-white text-primary flex items-center justify-center font-bold text-xs">
-                AE
-              </div>
-              <div>
-                <div className="font-bold text-white text-[15px]">{siteConfig.name}</div>
-                <div className="text-[10px] text-slate-500 uppercase tracking-widest">Escuela de Manejo</div>
+            <div className="flex items-center gap-2.5 mb-6">
+              <div className="h-24 w-auto shrink-0">
+                <img
+                  src="https://github.com/Binec/AcademiaMTY/blob/main/AM_SINFONDOMesa%20de%20trabajo%202%20copia%202@2x.png?raw=true"
+                  alt="AM Monterrey Academia"
+                  className="h-full w-auto object-contain"
+                />
               </div>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed max-w-[280px]">

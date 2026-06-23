@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { courses } from "../data/site";
 
@@ -30,7 +31,43 @@ const faqs = [
   { q: "¿El certificado es válido para la licencia?", a: "Sí. Nuestros certificados están avalados por las autoridades de tránsito." },
 ];
 
+const sliderItems = [
+  {
+    title: "Aprendizaje acompañado desde el primer día",
+    text: "Instructores certificados te guían paso a paso para que conduzcas con seguridad, calma y criterio vial.",
+    image: "https://images.pexels.com/photos/6817037/pexels-photo-6817037.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200",
+    label: "Clases prácticas",
+    cta: "Certifícate",
+    ctaLink: "/examenes",
+  },
+  {
+    title: "Confianza al volante en situaciones reales",
+    text: "Entrenamos en ciudad, circuitos controlados y escenarios cotidianos para fortalecer tu toma de decisiones.",
+    image: "https://images.pexels.com/photos/9518022/pexels-photo-9518022.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200",
+    label: "Manejo seguro",
+    cta: "Sign up",
+    ctaLink: "/signup",
+  },
+  {
+    title: "Preparación teórica para certificarte",
+    text: "Accede a materiales, simuladores y exámenes en línea para validar tus conocimientos antes de obtener tu certificado.",
+    image: "https://images.pexels.com/photos/35745592/pexels-photo-35745592.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200",
+    label: "Certificación",
+    cta: "Contáctanos",
+    ctaLink: "/contacto",
+  },
+];
+
 export default function Home() {
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setActiveSlide((current) => (current + 1) % sliderItems.length);
+    }, 5000);
+    return () => window.clearInterval(id);
+  }, []);
+
   return (
     <>
       {/* HERO */}
@@ -38,6 +75,13 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-r from-primary-dark/50 to-transparent" />
         <div className="container-x relative py-24 md:py-32 grid lg:grid-cols-2 gap-16 items-center">
           <div>
+            <div className="mb-8 h-28 md:h-36 w-auto">
+              <img
+                src="https://github.com/Binec/AcademiaMTY/blob/main/AM_SINFONDOMesa%20de%20trabajo%202%20copia%202@2x.png?raw=true"
+                alt="AM Monterrey Academia"
+                className="h-full w-auto object-contain"
+              />
+            </div>
             <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-xs font-medium mb-6">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
               Escuela certificada con 15+ años de experiencia
@@ -74,7 +118,7 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
-              <Link to="/cursos" className="block w-full bg-white text-primary py-3 rounded-lg text-sm font-semibold text-center hover:bg-slate-50 transition-colors">
+              <Link to="/cursos" className="block w-full bg-white text-primary py-3 rounded-lg text-sm font-semibold text-center hover:bg-primary hover:text-white transition-colors">
                 Reservar mi cupo
               </Link>
             </div>
@@ -90,6 +134,68 @@ export default function Home() {
                 <div className="text-xs text-white/60 mt-1">{s.label}</div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* IMAGE SLIDER */}
+      <section className="py-20 bg-white">
+        <div className="container-x">
+          <div className="relative h-[560px] sm:h-[480px] md:h-[540px] overflow-hidden rounded-2xl border border-slate-200 bg-primary shadow-sm">
+            {sliderItems.map((item, index) => (
+              <div
+                key={item.title}
+                className={`absolute inset-0 transition-opacity duration-700 ease-out ${
+                  index === activeSlide ? "opacity-100" : "opacity-0"
+                }`}
+              >
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className={`h-full w-full object-cover transition-transform duration-[5000ms] ease-linear ${
+                    index === activeSlide ? "scale-105" : "scale-100"
+                  }`}
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/50 to-primary/20 md:to-transparent" />
+              </div>
+            ))}
+
+            <div className="absolute inset-0 flex items-center p-4 sm:p-6 md:p-12">
+              <div className="w-full max-w-xl rounded-2xl border border-white/15 bg-white/[0.08] p-5 sm:p-6 md:p-8 text-white shadow-2xl backdrop-blur-md">
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white/80">
+                  <span className="h-1.5 w-1.5 rounded-full bg-secondary" />
+                  {sliderItems[activeSlide].label}
+                </div>
+                <h2 className="mt-3 text-2xl sm:text-3xl font-bold leading-tight md:text-4xl">
+                  {sliderItems[activeSlide].title}
+                </h2>
+                <p className="mt-3 text-xs sm:text-sm leading-relaxed text-white/75 md:text-base">
+                  {sliderItems[activeSlide].text}
+                </p>
+                <Link
+                  to={sliderItems[activeSlide].ctaLink}
+                  className="mt-4 inline-flex items-center gap-2 rounded-lg bg-secondary px-5 py-2.5 sm:px-6 sm:py-3 text-xs sm:text-sm font-semibold text-white shadow-lg transition-colors hover:bg-secondary-dark"
+                >
+                  {sliderItems[activeSlide].cta}
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M13 5l7 7-7 7" />
+                  </svg>
+                </Link>
+                <div className="mt-5 flex gap-2">
+                  {sliderItems.map((item, index) => (
+                    <button
+                      key={item.label}
+                      type="button"
+                      onClick={() => setActiveSlide(index)}
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
+                        index === activeSlide ? "w-10 bg-secondary" : "w-5 bg-white/40 hover:bg-white/70"
+                      }`}
+                      aria-label={`Ver slide ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -121,7 +227,7 @@ export default function Home() {
       </section>
 
       {/* COURSES */}
-      <section className="py-24 bg-slate-50">
+      <section className="py-24 bg-white">
         <div className="container-x">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-14">
             <div className="max-w-2xl">
@@ -191,7 +297,7 @@ export default function Home() {
       </section>
 
       {/* TESTIMONIALS */}
-      <section className="py-24 bg-slate-50">
+      <section className="py-24 bg-white">
         <div className="container-x">
           <div className="max-w-2xl mx-auto text-center mb-14">
             <div className="eyebrow mb-3">Testimonios</div>
