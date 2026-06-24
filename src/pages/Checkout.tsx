@@ -70,13 +70,13 @@ export default function Checkout() {
 
   return (
     <>
-      <section className="py-8">
+      <section className="bg-white py-8">
         <div className="container-x">
           <Link to="/cursos" className="text-sm text-primary font-medium hover:underline">← Volver a cursos</Link>
         </div>
       </section>
 
-      <section className="pb-24">
+      <section className="pb-24 bg-white">
         <div className="container-x grid lg:grid-cols-5 gap-8">
           <div className="lg:col-span-3 space-y-6">
             {/* Carrito */}
@@ -217,7 +217,7 @@ export default function Checkout() {
                 </div>
 
                 {method === "card" && (
-                  <div className="mt-5 rounded-xl  p-5 space-y-4">
+                  <div className="mt-5 rounded-xl bg-white border border-slate-100 p-5 space-y-4">
                     <div>
                       <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-2">Número de tarjeta</label>
                       <input
@@ -255,7 +255,7 @@ export default function Checkout() {
                 )}
 
                 {method !== "card" && (
-                  <div className="mt-5 rounded-xl bg-slate-50 p-5 text-sm text-muted">
+                  <div className="mt-5 rounded-xl bg-white border border-slate-100 p-5 text-sm text-muted">
                     Al confirmar serás redirigido al portal seguro de {method === "stripe" ? "Stripe" : method === "paypal" ? "PayPal" : "Mercado Pago"} para completar el pago.
                   </div>
                 )}
@@ -276,12 +276,12 @@ export default function Checkout() {
 
           {/* Resumen */}
           <aside className="lg:col-span-2">
-            <div className="bg-white rounded-xl border border-slate-100 p-7 sticky top-24">
+            <div className="bg-[#F9FAFB] rounded-xl border border-slate-100 p-7 sticky top-24 shadow-sm">
               <h3 className="font-semibold mb-5">Resumen del pedido</h3>
 
               <div className="space-y-3">
                 {cartCourses.map((c) => (
-                  <div key={c.id} className="rounded-lg bg-ink border border-slate-100 p-4 flex items-center justify-between gap-3">
+                  <div key={c.id} className="rounded-lg bg-white border border-slate-200 p-4 flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="text-xs font-semibold text-secondary uppercase truncate">{c.id.replace("_", " ")}</div>
                       <div className="font-semibold text-sm truncate">{c.title}</div>
