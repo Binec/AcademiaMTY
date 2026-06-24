@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { courses, CourseLevel } from "../data/site";
 import { useAuth } from "../context/AuthContext";
+import { createStripeSession } from "../services/payments";
 
 type PaymentMethod = "card" | "paypal" | "mercado" | "stripe";
 
@@ -18,6 +19,7 @@ export default function Checkout() {
   const [form, setForm] = useState({
     name: user?.name || "", email: user?.email || "", phone: user?.phone || "", card: "", exp: "", cvc: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   const cartCourses = useMemo(() => courses.filter((c) => cart.includes(c.id)), [cart]);
   const availableCourses = useMemo(
@@ -58,14 +60,38 @@ export default function Checkout() {
 
   const onSubmit = async (ev: React.FormEvent) => {
     ev.preventDefault();
+    setPaymentError(null);
     if (!validate()) return;
     setProcessing(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setProcessing(false);
-    const items = cart.join(",");
-    navigate(
-      `/gracias/${cart[0]}?items=${encodeURIComponent(items)}&name=${encodeURIComponent(form.name)}&email=${encodeURIComponent(form.email)}`
-    );
+
+    try {
+      if (method === "stripe") {
+        // Pago real vía Stripe Checkout: el backend calcula el total,
+        // crea la sesión y aquí solo redirigimos al portal seguro de Stripe.
+        const { url } = await createStripeSession({
+          cart,
+          name: form.name,
+          email: form.email,
+        });
+        window.location.href = url; // el alumno termina el pago en Stripe
+        return; // no seguimos ejecutando: la página va a navegar fuera
+      }
+
+      // TODO: cuando agregues PayPal / Mercado Pago, agrega un `else if`
+      // análogo aquí llamando a createPaypalOrder / createMercadoPagoPreference.
+
+      // Pago con tarjeta "directa" (simulado por ahora — no hay backend real
+      // de procesamiento de tarjetas conectado todavía).
+      await new Promise((r) => setTimeout(r, 1500));
+      const items = cart.join(",");
+      navigate(
+        `/gracias/${cart[0]}?items=${encodeURIComponent(items)}&name=${encodeURIComponent(form.name)}&email=${encodeURIComponent(form.email)}`
+      );
+    } catch (err) {
+      setPaymentError(err instanceof Error ? err.message : "Ocurrió un error al procesar el pago");
+    } finally {
+      setProcessing(false);
+    }
   };
 
   return (
@@ -260,6 +286,12 @@ export default function Checkout() {
                   </div>
                 )}
               </div>
+
+              {paymentError && (
+                <div className="mt-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm p-3">
+                  {paymentError}
+                </div>
+              )}
 
               <button
                 type="submit"
