@@ -76,7 +76,7 @@ export default function Checkout() {
         </div>
       </section>
 
-      <section className="pb-24 bg-slate-50">
+      <section className="pb-24">
         <div className="container-x grid lg:grid-cols-5 gap-8">
           <div className="lg:col-span-3 space-y-6">
             {/* Carrito */}
