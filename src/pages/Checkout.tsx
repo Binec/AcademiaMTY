@@ -70,7 +70,7 @@ export default function Checkout() {
 
   return (
     <>
-      <section className="bg-slate-50 py-8">
+      <section className="py-8">
         <div className="container-x">
           <Link to="/cursos" className="text-sm text-primary font-medium hover:underline">← Volver a cursos</Link>
         </div>
