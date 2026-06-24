@@ -281,7 +281,7 @@ export default function Checkout() {
 
               <div className="space-y-3">
                 {cartCourses.map((c) => (
-                  <div key={c.id} className="rounded-lg bg-slate-50 border border-slate-100 p-4 flex items-center justify-between gap-3">
+                  <div key={c.id} className="rounded-lg border border-slate-100 p-4 flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="text-xs font-semibold text-secondary uppercase truncate">{c.id.replace("_", " ")}</div>
                       <div className="font-semibold text-sm truncate">{c.title}</div>
